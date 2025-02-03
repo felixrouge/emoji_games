@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jeu avec Émojis, ZQSD et Projectiles Orientés</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #f0f0f0;
+    }
+    canvas {
+      display: block;
+      background: #222;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Joueur
+    let player = {
+      x: canvas.width / 2 - 25,
+      y: canvas.height / 2 - 25,
+      width: 50,
+      height: 50,
+      emoji: "👨",
+      speed: 5,
+      lives: 3,
+    };
+
+    // Objet à collecter
+    let collectible = {
+      x: Math.random() * (canvas.width - 50),
+      y: Math.random() * (canvas.height - 50),
+      width: 50,
+      height: 50,
+      emoji: "🍎",
+    };
+
+    // Ennemis et leurs couteaux
+    let enemies = [];
+    let knives = [];
+
+    for (let i = 0; i < 5; i++) {
+      enemies.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        width: 50,
+        height: 50,
+        emoji: "🔪",
+        speedX: (Math.random() - 0.5) * 4,
+        speedY: (Math.random() - 0.5) * 4,
+        fireRate: Math.random() * 2000 + 1000,
+        lastFireTime: 0,
+      });
+    }
+
+    let score = 0;
+
+    // Gestion des touches ZQSD
+    let keys = {};
+    window.addEventListener("keydown", (e) => {
+      keys[e.key.toLowerCase()] = true;
+    });
+    window.addEventListener("keyup", (e) => {
+      keys[e.key.toLowerCase()] = false;
+    });
+
+    function drawEmoji(emoji, x, y, size) {
+      ctx.font = `${size}px Arial`;
+      ctx.fillText(emoji, x, y + size);
+    }
+
+    function isColliding(rect1, rect2) {
+      return (
+        rect1.x < rect2.x + rect2.width &&
+        rect1.x + rect1.width > rect2.x &&
+        rect1.y < rect2.y + rect2.height &&
+        rect1.y + rect1.height > rect2.y
+      );
+    }
+
+    function gameLoop(timestamp) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Déplacement du joueur (ZQSD)
+      if (keys["z"] && player.y > 0) player.y -= player.speed;
+      if (keys["s"] && player.y < canvas.height - player.height) player.y += player.speed;
+      if (keys["q"] && player.x > 0) player.x -= player.speed;
+      if (keys["d"] && player.x < canvas.width - player.width) player.x += player.speed;
+
+      drawEmoji(player.emoji, player.x, player.y, player.width);
+
+      // Dessiner et vérifier la collision avec l'objet à collecter
+      drawEmoji(collectible.emoji, collectible.x, collectible.y, collectible.width);
+      if (isColliding(player, collectible)) {
+        score++;
+        collectible.x = Math.random() * (canvas.width - 50);
+        collectible.y = Math.random() * (canvas.height - 50);
+      }
+
+      // Déplacer et dessiner les ennemis
+      for (let enemy of enemies) {
+        enemy.x += enemy.speedX;
+        enemy.y += enemy.speedY;
+
+        if (enemy.x < 0 || enemy.x + enemy.width > canvas.width) enemy.speedX *= -1;
+        if (enemy.y < 0 || enemy.y + enemy.height > canvas.height) enemy.speedY *= -1;
+
+        drawEmoji(enemy.emoji, enemy.x, enemy.y, enemy.width);
+
+        // Tirer un couteau vers le joueur
+        if (timestamp - enemy.lastFireTime > enemy.fireRate) {
+          let angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+          knives.push({
+            x: enemy.x + enemy.width / 2,
+            y: enemy.y + enemy.height / 2,
+            width: 30,
+            height: 30,
+            emoji: "🔪",
+            speedX: Math.cos(angle) * 5,
+            speedY: Math.sin(angle) * 5,
+          });
+          enemy.lastFireTime = timestamp;
+        }
+      }
+
+      // Déplacer et dessiner les couteaux
+      for (let i = knives.length - 1; i >= 0; i--) {
+        let knife = knives[i];
+        knife.x += knife.speedX;
+        knife.y += knife.speedY;
+
+        drawEmoji(knife.emoji, knife.x, knife.y, knife.width);
+
+        // Si un couteau touche le joueur
+        if (isColliding(player, knife)) {
+          player.lives--;
+          knives.splice(i, 1);
+          if (player.lives <= 0) {
+            alert(`Game Over! Score final : ${score}`);
+            document.location.reload();
+          }
+        }
+
+        // Supprimer les couteaux hors écran
+        if (
+          knife.x < 0 ||
+          knife.x > canvas.width ||
+          knife.y < 0 ||
+          knife.y > canvas.height
+        ) {
+          knives.splice(i, 1);
+        }
+      }
+
+      // Afficher le score et les vies
+      ctx.fillStyle = "white";
+      ctx.font = "20px Arial";
+      ctx.fillText(`Score : ${score}`, 10, 30);
+      let livesText = "❤️".repeat(player.lives);
+      ctx.fillText(`Vies : ${livesText}`, 10, 60);
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop(0);
+  </script>
+</body>
+</html>
