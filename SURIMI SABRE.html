@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SURIMI SABRE</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        canvas {
+            display: block;
+            background-color: #eee;
+            margin: 0 auto;
+        }
+        .health-bar {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 20px;
+            background-color: #ddd;
+            border: 2px solid #000;
+        }
+        .health-bar-fill {
+            height: 100%;
+            background-color: red;
+        }
+        #player-health {
+            top: 40px;
+        }
+        #game-over, #next-level {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border: 2px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>SURIMI SABRE</h1>
+    <button onclick="startGame()">Commencer</button>
+    <div class="health-bar" id="boss-health"><div class="health-bar-fill" id="boss-health-fill"></div></div>
+    <div class="health-bar" id="player-health"><div class="health-bar-fill" id="player-health-fill"></div></div>
+    <div id="game-over"><h2>Défaite !</h2><button onclick="restartGame()">Recommencer</button></div>
+    <div id="next-level"><h2>Niveau suivant !</h2><button onclick="nextLevel()">Continuer</button></div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        let canvas = document.getElementById('gameCanvas');
+        let ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        let player = { x: 100, y: 100, size: 30, dx: 0, dy: 0, speed: 5, health: 10, maxHealth: 10 };
+        let boss = { x: canvas.width / 2, y: canvas.height / 2, size: 30, health: 100, regenRate: 0.2 };
+        let projectiles = [];
+        let bossProjectiles = [];
+        let healthDrops = [];
+        let keys = {};
+        let level = 1;
+        let lastBossShot = 0;
+        let lastPlayerShot = 0;
+        
+        function startGame() {
+            document.querySelector('button').style.display = 'none';
+            gameLoop();
+        }
+        
+        function gameLoop() {
+            update();
+            draw();
+            if (player.health > 0 && boss.health > 0) requestAnimationFrame(gameLoop);
+        }
+        
+        function update() {
+            player.dx = 0;
+            player.dy = 0;
+            
+            if (keys['z'] || keys['ArrowUp']) player.dy = -player.speed;
+            if (keys['s'] || keys['ArrowDown']) player.dy = player.speed;
+            if (keys['q'] || keys['ArrowLeft']) player.dx = -player.speed;
+            if (keys['d'] || keys['ArrowRight']) player.dx = player.speed;
+            
+            player.x += player.dx;
+            player.y += player.dy;
+            player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
+            
+            if (Date.now() - lastBossShot > 1000) {
+                let angle = Math.atan2(player.y - boss.y, player.x - boss.x);
+                bossProjectiles.push({ x: boss.x, y: boss.y, dx: Math.cos(angle) * 5, dy: Math.sin(angle) * 5 });
+                lastBossShot = Date.now();
+                
+                if (Math.random() < 1 / 20) {
+                    healthDrops.push({ x: boss.x, y: boss.y });
+                }
+            }
+            
+            projectiles.forEach((p, i) => {
+                p.x += p.dx;
+                p.y += p.dy;
+                if (Math.hypot(p.x - boss.x, p.y - boss.y) < boss.size) {
+                    boss.health -= 1;
+                    projectiles.splice(i, 1);
+                    updateHealthBars();
+                    if (boss.health <= 0) nextLevel();
+                }
+            });
+            
+            bossProjectiles.forEach((p, i) => {
+                p.x += p.dx;
+                p.y += p.dy;
+                if (Math.hypot(p.x - player.x, p.y - player.y) < player.size) {
+                    player.health--;
+                    bossProjectiles.splice(i, 1);
+                    updateHealthBars();
+                    if (player.health <= 0) gameOver();
+                }
+            });
+            
+            healthDrops.forEach((h, i) => {
+                if (Math.hypot(h.x - player.x, h.y - player.y) < player.size) {
+                    player.health = player.maxHealth;
+                    healthDrops.splice(i, 1);
+                    updateHealthBars();
+                }
+            });
+            
+            if (boss.health < 100) boss.health += boss.regenRate / 60;
+            updateHealthBars();
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '30px Arial';
+            ctx.fillText('👼', player.x, player.y);
+            ctx.fillText('👹', boss.x, boss.y);
+            projectiles.forEach(p => ctx.fillText('☀', p.x, p.y));
+            bossProjectiles.forEach(p => ctx.fillText('🔥', p.x, p.y));
+            healthDrops.forEach(h => ctx.fillText('💖', h.x, h.y));
+        }
+        
+        function updateHealthBars() {
+            document.getElementById('boss-health-fill').style.width = (boss.health / 100 * 100) + '%';
+            document.getElementById('player-health-fill').style.width = (player.health / player.maxHealth * 100) + '%';
+        }
+        
+        function gameOver() {
+            document.getElementById('game-over').style.display = 'block';
+        }
+        
+        function restartGame() {
+            location.reload();
+        }
+        
+        function nextLevel() {
+            boss.health = 100;
+            boss.regenRate += 0.1;
+            document.getElementById('next-level').style.display = 'block';
+        }
+        
+        window.addEventListener('keydown', (e) => keys[e.key] = true);
+        window.addEventListener('keyup', (e) => keys[e.key] = false);
+        window.addEventListener('click', (e) => {
+            let angle = Math.atan2(e.clientY - player.y, e.clientX - player.x);
+            projectiles.push({ x: player.x, y: player.y, dx: Math.cos(angle) * 7, dy: Math.sin(angle) * 7 });
+        });
+    </script>
+</body>
+</html>
