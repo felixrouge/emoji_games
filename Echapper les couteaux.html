@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jeu avec Émojis, ZQSD et Projectiles Orientés</title>
+  <title>Jeu avec Vies Bonus et Commandes ZQSD/Flèches</title>
   <style>
     body {
       margin: 0;
@@ -34,7 +34,7 @@
       height: 50,
       emoji: "👨",
       speed: 5,
-      lives: 3,
+      lives: ["❤️", "❤️", "❤️"], // Liste des vies
     };
 
     // Objet à collecter
@@ -46,9 +46,10 @@
       emoji: "🍎",
     };
 
-    // Ennemis et leurs couteaux
+    // Ennemis et projectiles
     let enemies = [];
     let knives = [];
+    let extraLives = []; // Liste des vies bonus 💛
 
     for (let i = 0; i < 5; i++) {
       enemies.push({
@@ -65,15 +66,11 @@
     }
 
     let score = 0;
-
-    // Gestion des touches ZQSD
     let keys = {};
-    window.addEventListener("keydown", (e) => {
-      keys[e.key.toLowerCase()] = true;
-    });
-    window.addEventListener("keyup", (e) => {
-      keys[e.key.toLowerCase()] = false;
-    });
+
+    // Gérer les touches ZQSD et flèches
+    window.addEventListener("keydown", (e) => { keys[e.key.toLowerCase()] = true; });
+    window.addEventListener("keyup", (e) => { keys[e.key.toLowerCase()] = false; });
 
     function drawEmoji(emoji, x, y, size) {
       ctx.font = `${size}px Arial`;
@@ -89,18 +86,32 @@
       );
     }
 
+    // Faire apparaître des vies bonus 💛
+    function spawnExtraLife() {
+      extraLives.push({
+        x: Math.random() * (canvas.width - 50),
+        y: Math.random() * (canvas.height - 50),
+        width: 40,
+        height: 40,
+        emoji: "💛",
+      });
+
+      setTimeout(spawnExtraLife, Math.random() * 10000 + 5000); // Une nouvelle vie toutes les 5 à 15 sec
+    }
+    spawnExtraLife();
+
     function gameLoop(timestamp) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Déplacement du joueur (ZQSD)
-      if (keys["z"] && player.y > 0) player.y -= player.speed;
-      if (keys["s"] && player.y < canvas.height - player.height) player.y += player.speed;
-      if (keys["q"] && player.x > 0) player.x -= player.speed;
-      if (keys["d"] && player.x < canvas.width - player.width) player.x += player.speed;
+      // Déplacement du joueur (ZQSD et flèches)
+      if ((keys["z"] || keys["arrowup"]) && player.y > 0) player.y -= player.speed;
+      if ((keys["s"] || keys["arrowdown"]) && player.y < canvas.height - player.height) player.y += player.speed;
+      if ((keys["q"] || keys["arrowleft"]) && player.x > 0) player.x -= player.speed;
+      if ((keys["d"] || keys["arrowright"]) && player.x < canvas.width - player.width) player.x += player.speed;
 
       drawEmoji(player.emoji, player.x, player.y, player.width);
 
-      // Dessiner et vérifier la collision avec l'objet à collecter
+      // Dessiner l'objet à collecter 🍎
       drawEmoji(collectible.emoji, collectible.x, collectible.y, collectible.width);
       if (isColliding(player, collectible)) {
         score++;
@@ -142,33 +153,40 @@
 
         drawEmoji(knife.emoji, knife.x, knife.y, knife.width);
 
-        // Si un couteau touche le joueur
         if (isColliding(player, knife)) {
-          player.lives--;
+          player.lives.pop(); // Perte d'une vie
           knives.splice(i, 1);
-          if (player.lives <= 0) {
+          if (player.lives.length === 0) {
             alert(`Game Over! Score final : ${score}`);
             document.location.reload();
           }
         }
 
-        // Supprimer les couteaux hors écran
-        if (
-          knife.x < 0 ||
-          knife.x > canvas.width ||
-          knife.y < 0 ||
-          knife.y > canvas.height
-        ) {
+        if (knife.x < 0 || knife.x > canvas.width || knife.y < 0 || knife.y > canvas.height) {
           knives.splice(i, 1);
         }
       }
 
-      // Afficher le score et les vies
+      // Dessiner et gérer les vies bonus 💛
+      for (let i = extraLives.length - 1; i >= 0; i--) {
+        let life = extraLives[i];
+        drawEmoji(life.emoji, life.x, life.y, life.width);
+
+        if (isColliding(player, life)) {
+          if (player.lives.length < 3) {
+            player.lives.push("❤️");
+          } else {
+            player.lives.push("💛");
+          }
+          extraLives.splice(i, 1);
+        }
+      }
+
+      // Afficher le score et les vies ❤️💛
       ctx.fillStyle = "white";
       ctx.font = "20px Arial";
       ctx.fillText(`Score : ${score}`, 10, 30);
-      let livesText = "❤️".repeat(player.lives);
-      ctx.fillText(`Vies : ${livesText}`, 10, 60);
+      ctx.fillText(`Vies : ${player.lives.join("")}`, 10, 60);
 
       requestAnimationFrame(gameLoop);
     }
