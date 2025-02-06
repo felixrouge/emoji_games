@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji Ball Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        canvas { background-color: #222; display: block; border: 2px solid white; }
+        #score, #timer {
+            position: absolute;
+            color: white;
+            font-size: 24px;
+            font-family: Arial, sans-serif;
+        }
+        #score { left: 20px; top: 20px; }
+        #timer { right: 20px; top: 20px; }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <div id="timer">Temps: 60</div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth * 0.8;
+        canvas.height = window.innerHeight * 0.8;
+
+        let player = { x: canvas.width / 2, y: canvas.height / 2, size: 20, emoji: "🕹" };
+        let ball = { x: 100, y: 100, speed: 2, baseSpeed: 2, emoji: "🏐" };
+        let apples = [];
+        let appleSize = 30;
+        let score = 0;
+        let timeLeft = 60;
+        let speedBoostActive = false;
+
+        function spawnApple() {
+            let isOp = Math.random() < 0.05; // 1 chance sur 20
+            apples.push({
+                x: Math.random() * (canvas.width - appleSize),
+                y: Math.random() * (canvas.height - appleSize),
+                size: isOp ? appleSize / 2 : appleSize,
+                emoji: isOp ? "🍏" : "🍎",
+                isOp: isOp
+            });
+        }
+
+        function moveBall() {
+            let dx = player.x - ball.x;
+            let dy = player.y - ball.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance > player.size + 15) {
+                ball.x += (dx / distance) * ball.speed;
+                ball.y += (dy / distance) * ball.speed;
+            }
+        }
+
+        function activateSpeedBoost() {
+            if (!speedBoostActive) {
+                speedBoostActive = true;
+                ball.speed *= 2;
+                setTimeout(() => {
+                    ball.speed = ball.baseSpeed;
+                    speedBoostActive = false;
+                }, 3000);
+            }
+        }
+
+        function checkCollision() {
+            apples = apples.filter(apple => {
+                let dx = ball.x - apple.x;
+                let dy = ball.y - apple.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < apple.size) {
+                    score += apple.isOp ? 3 : 1;
+                    document.getElementById("score").textContent = "Score: " + score;
+                    if (apple.isOp) activateSpeedBoost();
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Dessiner le joueur (🕹)
+            ctx.font = player.size * 2 + "px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(player.emoji, player.x, player.y);
+            
+            // Dessiner la balle (🏐)
+            ctx.fillText(ball.emoji, ball.x, ball.y);
+            
+            // Dessiner les pommes
+            apples.forEach(apple => {
+                ctx.font = apple.size + "px Arial";
+                ctx.fillText(apple.emoji, apple.x, apple.y);
+            });
+        }
+
+        function update() {
+            moveBall();
+            checkCollision();
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        function countdown() {
+            if (timeLeft > 0) {
+                timeLeft--;
+                document.getElementById("timer").textContent = "Temps: " + timeLeft;
+                setTimeout(countdown, 1000);
+            } else {
+                setTimeout(() => {
+                    if (confirm("Temps écoulé ! Score final: " + score + "\nRejouer ?")) {
+                        location.reload();
+                    }
+                }, 100);
+            }
+        }
+
+        window.addEventListener("mousemove", (e) => {
+            player.x = e.clientX - canvas.getBoundingClientRect().left;
+            player.y = e.clientY - canvas.getBoundingClientRect().top;
+        });
+
+        setInterval(spawnApple, 1000);
+        countdown();
+        update();
+    </script>
+</body>
+</html>
