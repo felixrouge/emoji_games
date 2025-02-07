@@ -3,111 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mini-Jeux HTML</title>
+  <title>Emoji Games</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
+      background: linear-gradient(135deg, #a8e6ff, #6cc6ff);
       text-align: center;
+      color: white;
     }
     
-    h1 {
-      margin-top: 20px;
-      font-size: 2.5rem;
-      color: #333;
+    .header {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      background: white;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .logo {
+      height: 40px;
+      margin-left: 20px;
     }
     
     .game-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
       padding: 20px;
-      max-width: 900px;
+      max-width: 1000px;
       margin: auto;
     }
     
     .game-card {
+      position: relative;
       background-color: white;
       border-radius: 15px;
-      padding: 10px;
-      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      overflow: hidden;
       cursor: pointer;
+      height: 120px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s ease-in-out;
     }
     
     .game-card:hover {
       transform: scale(1.05);
-      box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
     }
     
-    .game-image {
+    .game-card img {
       width: 100%;
-      height: 120px;
-      background-color: #ddd;
-      border-radius: 10px;
+      height: 100%;
+      object-fit: cover;
+      transition: opacity 0.3s;
+    }
+    
+    .game-card:hover img {
+      opacity: 0;
     }
     
     .game-title {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       font-size: 1rem;
       color: #333;
-      margin: 10px 0;
       font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.3s;
     }
     
-    .play-button {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 40px;
-      height: 40px;
-      background-color: #ffcc00;
-      color: black;
-      font-size: 1.5rem;
-      border-radius: 50%;
-      margin: auto;
-      transition: 0.3s;
-    }
-    
-    .play-button:hover {
-      background-color: #ffdd44;
+    .game-card:hover .game-title {
+      opacity: 1;
     }
   </style>
 </head>
 <body>
-  <h1>🎮 Emoji Games 🎮</h1>
-  
+  <div class="header">
+    <img src="logo.png" alt="Emoji Games" class="logo">
+  </div>
+
   <div class="game-container">
-    <!-- Jeu 1 -->
     <div class="game-card" onclick="startGame('Echapper les couteaux.html')">
-       <div class="game-image"><img src="image_2025-02-06_123018657.png" alt="Echapper les couteaux"></div>
+      <img src="image_2025-02-06_123018657.png" alt="Echapper les couteaux">
       <div class="game-title">Échapper les Couteaux</div>
-      <div class="play-button">▶</div>
     </div>
-
-    <!-- Jeu 2 -->
+    
     <div class="game-card" onclick="startGame('SURIMI SABRE.html')">
-      <div class="game-image"><img src="Capture d’écran 2025-02-06 124736.png" alt="SURIMI SABRE"></div>
+      <img src="Capture d’écran 2025-02-06 124736.png" alt="SURIMI SABRE">
       <div class="game-title">Surimi Sabre</div>
-      <div class="play-button">▶</div>
     </div>
 
-    <!-- Ajoute autant de jeux que tu veux en copiant ce bloc -->
-   <div class="game-card" onclick="startGame('Fast Collect Challenge.html')">
-      <div class="game-image"><img src="ehn.png" alt="Fast Collect Challenge"></div>
+    <div class="game-card" onclick="startGame('Fast Collect Challenge.html')">
+      <img src="ehn.png" alt="Fast Collect Challenge">
       <div class="game-title">Fast Collect Challenge</div>
-      <div class="play-button">▶</div>
     </div>
-
-    <style>
-  .game-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-  }
-</style>
-
+  </div>
 
   <script>
     function startGame(gameUrl) {
