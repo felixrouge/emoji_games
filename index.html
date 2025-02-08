@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Emoji Games</title>
+  <title>🎮🎭 Emoji Games</title>
   <style>
     body {
       margin: 0;
@@ -12,67 +12,74 @@
       text-align: center;
       color: white;
     }
-    
+
     .header {
       display: flex;
       align-items: center;
-      padding: 15px;
+      justify-content: space-between;
+      padding: 15px 20px;
       background: white;
       box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
     }
 
     .logo {
-      height: 40px;
-      margin-left: 20px;
+      height: 50px;
     }
-    
+
+    .title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #333;
+    }
+
     .game-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 15px;
       padding: 20px;
       max-width: 1000px;
       margin: auto;
     }
-    
+
     .game-card {
       position: relative;
-      background-color: white;
+      background: white;
       border-radius: 15px;
       overflow: hidden;
       cursor: pointer;
-      height: 120px;
+      height: 140px;
       box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-      transition: transform 0.2s ease-in-out;
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     }
-    
+
     .game-card:hover {
-      transform: scale(1.05);
+      transform: scale(1.08);
+      box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
     }
-    
+
     .game-card img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       transition: opacity 0.3s;
     }
-    
+
     .game-card:hover img {
-      opacity: 0;
+      opacity: 0.2;
     }
-    
+
     .game-title {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 1rem;
+      font-size: 1.2rem;
       color: #333;
       font-weight: bold;
       opacity: 0;
       transition: opacity 0.3s;
     }
-    
+
     .game-card:hover .game-title {
       opacity: 1;
     }
@@ -80,22 +87,23 @@
 </head>
 <body>
   <div class="header">
-    <img src="logo.png" alt="Emoji Games" class="logo">
+    <img src="emoji games.webp" alt="Emoji Games" class="logo">
+    <div class="title">🎮🎭 Emoji Games</div>
   </div>
 
   <div class="game-container">
     <div class="game-card" onclick="startGame('Echapper les couteaux.html')">
-      <img src="echapper les cpouteaux.png" alt="Echapper les couteaux">
+      <img src="echapper_les_couteaux.png" alt="Échapper les Couteaux">
       <div class="game-title">Échapper les Couteaux</div>
     </div>
-    
+
     <div class="game-card" onclick="startGame('SURIMI SABRE.html')">
-      <img src="surimi sabre.png" alt="SURIMI SABRE">
+      <img src="surimi_sabre.png" alt="Surimi Sabre">
       <div class="game-title">Surimi Sabre</div>
     </div>
 
     <div class="game-card" onclick="startGame('Fast Collect Challenge.html')">
-      <img src="fast collect challeng.png" alt="Fast Collect Challenge">
+      <img src="fast_collect_challenge.png" alt="Fast Collect Challenge">
       <div class="game-title">Fast Collect Challenge</div>
     </div>
   </div>
