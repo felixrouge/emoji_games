@@ -32,6 +32,20 @@
       color: #333;
     }
 
+    .youtube-button {
+      background-color: #FF0000;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    .youtube-button:hover {
+      background-color: #CC0000;
+    }
+
     .game-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -89,11 +103,14 @@
   <div class="header">
     <img src="logo emoji games.webp" alt="Emoji Games" class="logo">
     <div class="title">🎮🎭 Emoji Games</div>
+    <a href="https://youtube.com/@emoji_games_yt" target="_blank" class="youtube-button">
+      📺 La chaîne de notre projet sur YouTube
+    </a>
   </div>
 
   <div class="game-container">
     <div class="game-card" onclick="startGame('Echapper les couteaux.html')">
-      <img src="echapper les cpouteaux.png" alt="Échapper les Couteaux">
+      <img src="echapper les couteaux.png" alt="Échapper les Couteaux">
       <div class="game-title">Échapper les Couteaux</div>
     </div>
 
