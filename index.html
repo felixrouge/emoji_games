@@ -8,9 +8,14 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #a8e6ff, #6cc6ff);
+      background: 
+        linear-gradient(135deg, #a8e6ff99, #6cc6ff99),
+        url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+      background-size: cover;
       text-align: center;
       color: white;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
 
     .header {
@@ -97,6 +102,23 @@
     .game-card:hover .game-title {
       opacity: 1;
     }
+
+    /* Fleurs qui tombent */
+    .emoji-flower {
+      position: fixed;
+      top: -2em;
+      font-size: 2.2rem;
+      pointer-events: none;
+      z-index: 1;
+      animation: fall-flower linear forwards;
+    }
+
+    @keyframes fall-flower {
+      to {
+        transform: translateY(110vh) rotate(360deg);
+        opacity: 0.7;
+      }
+    }
   </style>
 </head>
 <body>
@@ -129,6 +151,20 @@
     function startGame(gameUrl) {
       window.location.href = gameUrl;
     }
+
+    // Fleurs qui tombent
+    const flowers = ['🌸','🌼','🌺','🌷'];
+    function createFlower() {
+      const flower = document.createElement('div');
+      flower.className = 'emoji-flower';
+      flower.textContent = flowers[Math.floor(Math.random() * flowers.length)];
+      flower.style.left = Math.random() * 98 + 'vw';
+      flower.style.animationDuration = (Math.random() * 2 + 3) + 's';
+      flower.style.opacity = Math.random() * 0.5 + 0.5;
+      document.body.appendChild(flower);
+      setTimeout(() => flower.remove(), 5000);
+    }
+    setInterval(createFlower, 350);
   </script>
 </body>
 </html>
