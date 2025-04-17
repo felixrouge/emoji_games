@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jeu Mafia avec émojis - Avec sons</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #222;
+    color: #eee;
+    margin: 0; padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+  h1 {
+    margin-top: 20px;
+  }
+  #setup, #game, #role-reveal, #action, #vote, #result {
+    margin-top: 20px;
+    max-width: 600px;
+    width: 100%;
+  }
+  input[type="number"], input[type="text"] {
+    padding: 8px;
+    font-size: 1em;
+    margin: 5px 0;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 5px;
+    border: none;
+  }
+  button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 10px;
+    font-size: 1em;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s;
+  }
+  button:disabled {
+    background: #555;
+    cursor: default;
+  }
+  #start-game-btn {
+    font-size: 2em;
+    padding: 20px 40px;
+    margin-top: 30px;
+    border-radius: 20px;
+  }
+  .player-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .player-card {
+    background: #333;
+    border-radius: 10px;
+    padding: 10px;
+    flex: 1 0 45%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s;
+    font-weight: bold;
+    font-size: 1.1em;
+    text-align: center;
+  }
+  .player-card.dead {
+    opacity: 0.5;
+    text-decoration: line-through;
+    cursor: default;
+  }
+  #role-text {
+    font-size: 1.5em;
+    margin: 20px 0;
+    text-align: center;
+  }
+  #info {
+    margin-top: 15px;
+    font-size: 1.1em;
+    min-height: 2em;
+    text-align: center;
+  }
+  #vote .player-card {
+    flex: 1 0 30%;
+  }
+</style>
+</head>
+<body>
+
+<h1>Jeu Mafia avec émojis</h1>
+
+<div id="setup">
+  <label for="player-count">Nombre de joueurs (4 à 12) :</label>
+  <input type="number" id="player-count" min="4" max="12" value="4" />
+  <button id="start-names">Suivant</button>
+  <div id="names-inputs"></div>
+</div>
+
+<div id="role-reveal" style="display:none;">
+  <p id="role-text"></p>
+  <button id="reveal-next">Voir mon rôle</button>
+  <button id="start-game-btn" style="display:none;">COMMENCER</button>
+</div>
+
+<div id="game" style="display:none;">
+  <div id="info"></div>
+  <div id="action"></div>
+  <div id="vote"></div>
+  <div id="result"></div>
+  <button id="next-turn" style="display:none;">Tour suivant</button>
+</div>
+
+<!-- Sons -->
+<audio id="sound-mafia" src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg" preload="auto"></audio>
+<audio id="sound-doctor" src="https://actions.google.com/sounds/v1/alarms/bugle_tune.ogg" preload="auto"></audio>
+<audio id="sound-seer" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+
+<script>
+(() => {
+  let playerCount = 0;
+  let players = [];
+  let roles = [];
+  let currentReveal = 0;
+  let phase = 'reveal';
+  let mafiaVictim = null;
+  let doctorSave = null;
+  let seerTarget = null;
+  let votes = {};
+  let voteCount = 0;
+  let day = 1;
+
+  const ROLE_EMOJIS = {
+    mafia: '🕵️‍♂️',
+    doctor: '💉',
+    seer: '🔮',
+    villager: '👨‍🌾'
+  };
+
+  const setupDiv = document.getElementById('setup');
+  const playerCountInput = document.getElementById('player-count');
+  const startNamesBtn = document.getElementById('start-names');
+  const namesInputsDiv = document.getElementById('names-inputs');
+
+  const roleRevealDiv = document.getElementById('role-reveal');
+  const roleTextP = document.getElementById('role-text');
+  const revealNextBtn = document.getElementById('reveal-next');
+  const startGameBtn = document.getElementById('start-game-btn');
+
+  const gameDiv = document.getElementById('game');
+  const infoDiv = document.getElementById('info');
+  const actionDiv = document.getElementById('action');
+  const voteDiv = document.getElementById('vote');
+  const resultDiv = document.getElementById('result');
+  const nextTurnBtn = document.getElementById('next-turn');
+
+  const soundMafia = document.getElementById('sound-mafia');
+  const soundDoctor = document.getElementById('sound-doctor');
+  const soundSeer = document.getElementById('sound-seer');
+
+  startNamesBtn.onclick = () => {
+    playerCount = parseInt(playerCountInput.value);
+    if (isNaN(playerCount) || playerCount < 4 || playerCount > 12) {
+      alert('Le nombre de joueurs doit être entre 4 et 12.');
+      return;
+    }
+    namesInputsDiv.innerHTML = '';
+    for(let i=0; i<playerCount; i++) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = `Nom du joueur ${i+1}`;
+      input.required = true;
+      input.id = 'name-'+i;
+      namesInputsDiv.appendChild(input);
+    }
+    startNamesBtn.textContent = 'Commencer la révélation des rôles';
+    startNamesBtn.onclick = startGame;
+  };
+
+  function startGame() {
+    players = [];
+    for(let i=0; i<playerCount; i++) {
+      const nameInput = document.getElementById('name-'+i);
+      if(!nameInput.value.trim()) {
+        alert('Merci de remplir tous les noms.');
+        return;
+      }
+      players.push({id:i, name: nameInput.value.trim(), role: null, alive: true});
+    }
+    assignRoles();
+    setupDiv.style.display = 'none';
+    roleRevealDiv.style.display = 'block';
+    currentReveal = 0;
+    startGameBtn.style.display = 'none';
+    revealNextBtn.style.display = 'inline-block';
+    roleTextP.textContent = `Joueur ${players[currentReveal].name}, découvrez votre rôle.`;
+    phase = 'reveal';
+  }
+
+  function assignRoles() {
+    roles = [];
+    const mafiaCount = 1;
+    const doctorCount = 1;
+    const seerCount = 1;
+    const villagerCount = playerCount - mafiaCount - doctorCount - seerCount;
+    for(let i=0; i<mafiaCount; i++) roles.push('mafia');
+    for(let i=0; i<doctorCount; i++) roles.push('doctor');
+    for(let i=0; i<seerCount; i++) roles.push('seer');
+    for(let i=0; i<villagerCount; i++) roles.push('villager');
+    roles = roles.sort(() => Math.random() - 0.5);
+    players.forEach((p,i) => p.role = roles[i]);
+  }
+
+  revealNextBtn.onclick = () => {
+    if (phase !== 'reveal') return;
+    const player = players[currentReveal];
+    if (revealNextBtn.textContent === 'Voir mon rôle') {
+      let desc = '';
+      switch(player.role) {
+        case 'mafia':
+          desc = 'Vous êtes la <strong>Mafia</strong> 🕵️‍♂️<br>Votre but : éliminer les villageois sans vous faire démasquer.';
+          break;
+        case 'doctor':
+          desc = 'Vous êtes le <strong>Docteur</strong> 💉<br>Chaque nuit, vous pouvez sauver un joueur (pas vous).';
+          break;
+        case 'seer':
+          desc = 'Vous êtes la <strong>Voyante</strong> 🔮<br>Chaque nuit, vous pouvez découvrir le rôle d’un joueur.';
+          break;
+        case 'villager':
+          desc = 'Vous êtes un <strong>Villageois</strong> 👨‍🌾<br>Votre but : démasquer la Mafia et survivre.';
+          break;
+      }
+      roleTextP.innerHTML = `${player.name}, votre rôle est :<br><span style="font-size:4em;">${ROLE_EMOJIS[player.role]}</span><br><p style="font-size:1.3em; margin-top:10px;">${desc}</p>`;
+      revealNextBtn.textContent = 'Cacher mon rôle';
+    } else {
+      currentReveal++;
+      if (currentReveal >= playerCount) {
+        roleTextP.textContent = 'Tous les joueurs ont découvert leur rôle.';
+        revealNextBtn.style.display = 'none';
+        startGameBtn.style.display = 'inline-block';
+      } else {
+        roleTextP.textContent = `Joueur ${players[currentReveal].name}, découvrez votre rôle.`;
+        revealNextBtn.textContent = 'Voir mon rôle';
+      }
+    }
+  };
+
+  startGameBtn.onclick = () => {
+    roleRevealDiv.style.display = 'none';
+    gameDiv.style.display = 'block';
+    startNightPhase();
+  };
+
+  function startNightPhase() {
+    day++;
+    mafiaVictim = null;
+    doctorSave = null;
+    seerTarget = null;
+    votes = {};
+    voteCount = 0;
+    infoDiv.textContent = '';
+    actionDiv.innerHTML = '';
+    voteDiv.innerHTML = '';
+    resultDiv.innerHTML = '';
+    nextTurnBtn.style.display = 'none';
+
+    const mafiaPlayers = players.filter(p => p.alive && p.role === 'mafia');
+    if (mafiaPlayers.length === 0) {
+      infoDiv.textContent = 'La Mafia est éliminée, le village gagne !';
+      endGame('village');
+      return;
+    }
+
+    soundMafia.play();
+    infoDiv.textContent = `Nuit ${day - 1} : La Mafia se réveille...`;
+    setTimeout(() => {
+      infoDiv.textContent = `Nuit ${day - 1} : La Mafia se réveille, choisissez une victime.`;
+      showMafiaChoices();
+    }, 2500);
+  }
+
+  function showMafiaChoices() {
+    actionDiv.innerHTML = '';
+    const alivePlayers = players.filter(p => p.alive);
+    const mafiaPlayers = players.filter(p => p.alive && p.role === 'mafia');
+    const container = document.createElement('div');
+    container.className = 'player-list';
+    alivePlayers.forEach(p => {
+      if (!mafiaPlayers.some(m => m.id === p.id)) {
+        const card = createPlayerCard(p, false);
+        card.onclick = () => {
+          mafiaVictim = p.id;
+          infoDiv.textContent = `La Mafia a choisi de tuer ${p.name}.`;
+          actionDiv.innerHTML = '';
+          setTimeout(startDoctorPhase, 1500);
+        };
+        container.appendChild(card);
+      }
+    });
+    actionDiv.appendChild(container);
+  }
+
+  function startDoctorPhase() {
+    const doctor = players.find(p => p.alive && p.role === 'doctor');
+    if (!doctor) {
+      infoDiv.textContent = 'Le Docteur est mort, phase sautée.';
+      setTimeout(startSeerPhase, 1500);
+      return;
+    }
+    soundDoctor.play();
+    infoDiv.textContent = 'Le Docteur se réveille...';
+    actionDiv.innerHTML = '';
+    setTimeout(() => {
+      infoDiv.textContent = 'Le Docteur se réveille, choisissez qui sauver (pas vous-même).';
+      showDoctorChoices(doctor);
+    }, 2500);
+  }
+
+  function showDoctorChoices(doctor) {
+    const alivePlayers = players.filter(p => p.alive);
+    const container = document.createElement('div');
+    container.className = 'player-list';
+    alivePlayers.forEach(p => {
+      if (p.id !== doctor.id) {
+        const card = createPlayerCard(p, false);
+        card.onclick = () => {
+          doctorSave = p.id;
+          infoDiv.textContent = `Le Docteur a choisi de sauver ${players.find(pl => pl.id === p.id).name}.`;
+          actionDiv.innerHTML = '';
+          setTimeout(startSeerPhase, 1500);
+        };
+        container.appendChild(card);
+      }
+    });
+    actionDiv.appendChild(container);
+  }
+
+  function startSeerPhase() {
+    const seer = players.find(p => p.alive && p.role === 'seer');
+    if (!seer) {
+      infoDiv.textContent = 'La Voyante est morte, phase sautée.';
+      setTimeout(startDayPhase, 1500);
+      return;
+    }
+    soundSeer.play();
+    infoDiv.textContent = 'La Voyante se réveille...';
+    actionDiv.innerHTML = '';
+    setTimeout(() => {
+      infoDiv.textContent = 'La Voyante se réveille, choisissez un joueur à inspecter.';
+      showSeerChoices();
+    }, 2500);
+  }
+
+  function showSeerChoices() {
+    const alivePlayers = players.filter(p => p.alive);
+    const container = document.createElement('div');
+    container.className = 'player-list';
+    alivePlayers.forEach(p => {
+      const card = createPlayerCard(p, false);
+      card.onclick = () => {
+        seerTarget = p.id;
+        const isMafia = players.find(pl => pl.id === p.id).role === 'mafia';
+        const resultEmoji = isMafia ? '✅' : '❌';
+        infoDiv.innerHTML = `La Voyante a inspecté <b>${players.find(pl => pl.id === p.id).name}</b> : ${resultEmoji}`;
+        actionDiv.innerHTML = '';
+        setTimeout(startDayPhase, 3000);
+      };
+      container.appendChild(card);
+    });
+    actionDiv.appendChild(container);
+  }
+
+  function startDayPhase() {
+    infoDiv.textContent = `Jour ${day} : Tout le monde se réveille.`;
+    actionDiv.innerHTML = '';
+    voteDiv.innerHTML = '';
+    resultDiv.innerHTML = '';
+
+    if (mafiaVictim !== null && mafiaVictim !== doctorSave) {
+      const victim = players.find(p => p.id === mafiaVictim);
+      victim.alive = false;
+      infoDiv.textContent += `<br>La victime de la Mafia est <b>${victim.name}</b> !`;
+    } else {
+      infoDiv.textContent += `<br>La victime a été sauvée par le Docteur !`;
+    }
+
+    if (checkVictory()) return;
+
+    infoDiv.innerHTML += '<br>Votez pour éliminer un joueur suspect.';
+    createVoteCards();
+  }
+
+  function createVoteCards() {
+    voteDiv.innerHTML = '';
+    const alivePlayers = players.filter(p => p.alive);
+    const container = document.createElement('div');
+    container.className = 'player-list';
+    alivePlayers.forEach(p => {
+      const card = createPlayerCard(p, false);
+      card.onclick = () => {
+        if (votes[currentVoterId] !== undefined) return;
+        votes[currentVoterId] = p.id;
+        card.style.backgroundColor = '#4CAF50';
+        infoDiv.textContent = `${players.find(pl => pl.id === currentVoterId).name} a voté pour ${p.name}.`;
+        nextVoter();
+      };
+      container.appendChild(card);
+    });
+    voteDiv.appendChild(container);
+
+    currentVoterIndex = 0;
+    currentVoterId = alivePlayers[currentVoterIndex].id;
+    infoDiv.textContent = `${players.find(pl => pl.id === currentVoterId).name}, c'est votre tour de voter. Cliquez sur un joueur.`;
+  }
+
+  let currentVoterIndex = 0;
+  let currentVoterId = null;
+
+  function nextVoter() {
+    const alivePlayers = players.filter(p => p.alive);
+    currentVoterIndex++;
+    if (currentVoterIndex >= alivePlayers.length) {
+      tallyVotes();
+      return;
+    }
+    currentVoterId = alivePlayers[currentVoterIndex].id;
+    infoDiv.textContent = `${players.find(pl => pl.id === currentVoterId).name}, c'est votre tour de voter. Cliquez sur un joueur.`;
+  }
+
+  function tallyVotes() {
+    let countMap = {};
+    for (let voter in votes) {
+      const votedId = votes[voter];
+      countMap[votedId] = (countMap[votedId] || 0) + 1;
+    }
+    let maxVotes = 0;
+    for (let id in countMap) {
+      if (countMap[id] > maxVotes) maxVotes = countMap[id];
+    }
+    let candidates = Object.keys(countMap).filter(id => countMap[id] === maxVotes);
+    if (candidates.length > 1) {
+      infoDiv.textContent = `Égalité entre ${candidates.map(id => players.find(p => p.id == id).name).join(', ')}. Pas d'élimination. Nouveau round.`;
+      votes = {};
+      voteCount = 0;
+      currentVoterIndex = 0;
+      currentVoterId = null;
+      nextTurnBtn.style.display = 'inline-block';
+      return;
+    }
+    const eliminatedId = parseInt(candidates[0]);
+    const eliminatedPlayer = players.find(p => p.id === eliminatedId);
+    eliminatedPlayer.alive = false;
+    infoDiv.textContent = `${eliminatedPlayer.name} a été éliminé par le vote.`;
+    voteDiv.innerHTML = '';
+    nextTurnBtn.style.display = 'inline-block';
+
+    if (checkVictory()) return;
+  }
+
+  function checkVictory() {
+    const alivePlayers = players.filter(p => p.alive);
+    const mafiaAlive = alivePlayers.filter(p => p.role === 'mafia').length;
+    const villagersAlive = alivePlayers.length - mafiaAlive;
+
+    if (mafiaAlive === 0) {
+      endGame('village');
+      return true;
+    }
+    if (mafiaAlive >= villagersAlive) {
+      endGame('mafia');
+      return true;
+    }
+    if (alivePlayers.length === 0) {
+      endGame('mafia');
+      return true;
+    }
+    return false;
+  }
+
+  function endGame(winner) {
+    infoDiv.textContent = '';
+    actionDiv.innerHTML = '';
+    voteDiv.innerHTML = '';
+    nextTurnBtn.style.display = 'none';
+    let msg = '';
+    if (winner === 'village') {
+      msg = 'Le village a gagné ! 🎉';
+    } else {
+      msg = 'La Mafia a gagné... 🕵️‍♂️';
+    }
+    resultDiv.innerHTML = `<h2>${msg}</h2><p>Rôles finaux :</p>`;
+    const list = document.createElement('ul');
+    players.forEach(p => {
+      const li = document.createElement('li');
+      li.textContent = `${p.name} : ${p.role} ${ROLE_EMOJIS[p.role]} ${p.alive ? '(vivant)' : '(mort)'}`;
+      list.appendChild(li);
+    });
+    resultDiv.appendChild(list);
+    const btn = document.createElement('button');
+    btn.textContent = 'Rejouer';
+    btn.onclick = () => location.reload();
+    resultDiv.appendChild(btn);
+  }
+
+  nextTurnBtn.onclick = () => {
+    nextTurnBtn.style.display = 'none';
+    votes = {};
+    voteCount = 0;
+    currentVoterIndex = 0;
+    currentVoterId = null;
+    startNightPhase();
+  };
+
+  function createPlayerCard(player, showEmoji = false) {
+    const card = document.createElement('div');
+    card.className = 'player-card';
+    if (!player.alive) card.classList.add('dead');
+    card.textContent = player.name;
+    if (showEmoji) {
+      const emojiSpan = document.createElement('span');
+      emojiSpan.style.marginLeft = '10px';
+      emojiSpan.textContent = ROLE_EMOJIS[player.role];
+      card.appendChild(emojiSpan);
+    }
+    return card;
+  }
+})();
+</script>
+
+</body>
+</html>

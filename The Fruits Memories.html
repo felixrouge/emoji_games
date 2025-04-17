@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Fruits Memories</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+  body {
+    font-family: 'Patrick Hand', cursive, Arial, sans-serif;
+    background: url('https://images.pexels.com/photos/3804878/pexels-photo-3804878.jpeg?cs=srgb&dl=pexels-timmossholder-3804878.jpg&fm=jpg') no-repeat center center fixed;
+    background-size: cover;
+    margin: 0; padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: #e3e3e3;
+    position: relative;
+  }
+  h1 {
+    margin-top: 30px;
+    text-shadow: 1px 1px 3px #0008;
+    font-size: 2.2em;
+  }
+  #level-selection {
+    margin-top: 40px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    z-index: 10;
+    position: relative;
+  }
+  .level-card {
+    width: 110px;
+    height: 110px;
+    background: rgba(125, 124, 124 / 0.9);
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgb(0 0 0 / 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    font-weight: bold;
+    font-size: 1.3em;
+    position: relative;
+    transition: background-color 0.3s, transform 0.2s;
+  }
+  .level-card.locked {
+    cursor: default;
+    color: #999;
+    background: rgba(200 200 200 / 0.7);
+    box-shadow: none;
+  }
+  .level-card.locked:hover {
+    background: rgba(200 200 200 / 0.7);
+    transform: none;
+  }
+  .level-card:hover:not(.locked) {
+    background: #b2f2b2;
+    transform: scale(1.05);
+  }
+  .lock-icon {
+    font-size: 2.5em;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #999;
+    user-select: none;
+  }
+  #game-container {
+    margin-top: 30px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+    position: relative;
+  }
+  #game {
+    display: grid;
+    gap: 8px;
+    justify-content: center;
+    user-select: none;
+  }
+  .card {
+    background: #fff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px #ccc;
+    font-size: 2em;
+    user-select: none;
+    transition: background-color 0.3s;
+  }
+  .card.matched {
+    background: #b2f2b2;
+    cursor: default;
+  }
+  #message {
+    margin-top: 20px;
+    font-size: 1.3em;
+    font-weight: bold;
+    min-height: 2em;
+    color: #060;
+    text-shadow: 1px 1px 3px #fff9;
+    user-select: none;
+  }
+  #back-button {
+    margin-top: 20px;
+    padding: 10px 22px;
+    font-size: 1.1em;
+    border: none;
+    border-radius: 12px;
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s;
+    box-shadow: 0 4px 8px rgb(0 128 0 / 0.5);
+  }
+  #back-button:hover {
+    background: #45a049;
+  }
+
+  /* Animation fruits tombants */
+  .fruit {
+    position: fixed;
+    top: -50px;
+    font-size: 2em;
+    user-select: none;
+    pointer-events: none;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes fall {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(110vh) rotate(360deg);
+      opacity: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>The Fruits Memories</h1>
+
+<div id="level-selection"></div>
+
+<div id="game-container">
+  <div id="game"></div>
+  <p id="message"></p>
+  <button id="back-button">Retour au menu</button>
+</div>
+
+<script>
+  // Configuration des niveaux avec taille carrée
+  const levels = [
+    { size: 5 },  // 5x5 = 25 cartes (12 paires + 1 carte seule)
+    { size: 7 },  // 7x7 = 49 cartes (24 paires + 1 carte seule)
+    { size: 10 }, // 10x10 = 100 cartes (50 paires)
+    { size: 15 }, // 15x15 = 225 cartes (112 paires + 1 carte seule)
+    { size: 20 }  // 20x20 = 400 cartes (200 paires)
+  ];
+
+  // Liste d'émojis fruits variés (plus que nécessaire)
+  const allEmojis = [
+    '🍎','🍌','🍒','🍇','🍉','🍋','🍓','🍍',
+    '🥝','🥥','🍑','🍈','🍐','🍊','🍏','🥭',
+    '🍅','🥕','🌽','🥔','🍆','🥒','🍄','🌶️',
+    '🥭','🍋','🍉','🍇','🍓','🍍','🍌','🍎',
+    '🥝','🍑','🍈','🍐','🍊','🍏','🥥','🍅',
+    '🥕','🌽','🥔','🍆','🥒','🍄','🌶️','🍓',
+    '🍉','🍋','🍍','🍎','🍌','🍒','🍇','🥝',
+    '🥥','🍑','🍈','🍐','🍊','🍏','🥭','🍅'
+  ];
+
+  // Niveau débloqué stocké dans localStorage (par défaut 1)
+  let unlockedLevel = parseInt(localStorage.getItem('unlockedLevel')) || 1;
+
+  const levelSelection = document.getElementById('level-selection');
+  const gameContainer = document.getElementById('game-container');
+  const gameGrid = document.getElementById('game');
+  const message = document.getElementById('message');
+  const backButton = document.getElementById('back-button');
+
+  let firstCard = null;
+  let secondCard = null;
+  let lockBoard = false;
+  let matchedCount = 0;
+  let currentLevel = 0;
+  let cards = [];
+
+  // Fonction pour générer un tableau de paires aléatoires adaptées à la taille
+  function generateCards(size) {
+    const totalCards = size * size;
+    const pairCount = Math.floor(totalCards / 2);
+    // Prendre un sous-ensemble d'émojis aléatoires
+    let emojisShuffled = allEmojis.sort(() => Math.random() - 0.5);
+    let selectedEmojis = emojisShuffled.slice(0, pairCount);
+    let cardArray = [...selectedEmojis, ...selectedEmojis];
+    // Si nombre total impair, ajouter une carte seule aléatoire
+    if (totalCards % 2 !== 0) {
+      cardArray.push(selectedEmojis[Math.floor(Math.random() * pairCount)]);
+    }
+    return cardArray.sort(() => Math.random() - 0.5);
+  }
+
+  // Affiche les cartes de niveaux avec cadenas si verrouillés
+  function renderLevelSelection() {
+    levelSelection.innerHTML = '';
+    levels.forEach((level, index) => {
+      const lvl = index + 1;
+      const card = document.createElement('div');
+      card.className = 'level-card';
+      card.textContent = `Niveau ${lvl}`;
+      if (lvl > unlockedLevel) {
+        card.classList.add('locked');
+        const lockIcon = document.createElement('span');
+        lockIcon.className = 'lock-icon';
+        lockIcon.textContent = '🔒';
+        card.appendChild(lockIcon);
+      } else {
+        card.onclick = () => startLevel(lvl);
+      }
+      levelSelection.appendChild(card);
+    });
+  }
+
+  // Lance un niveau
+  function startLevel(level) {
+    currentLevel = level;
+    matchedCount = 0;
+    firstCard = null;
+    secondCard = null;
+    lockBoard = false;
+    message.textContent = '';
+    levelSelection.style.display = 'none';
+    gameContainer.style.display = 'flex';
+
+    const size = levels[level - 1].size;
+    cards = generateCards(size);
+
+    // Adapter la grille avec la taille du niveau
+    gameGrid.style.gridTemplateColumns = `repeat(${size}, 50px)`;
+    gameGrid.style.gridTemplateRows = `repeat(${size}, 50px)`;
+
+    gameGrid.innerHTML = '';
+    cards.forEach((emoji, i) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.index = i;
+      card.dataset.emoji = emoji;
+      card.textContent = '';
+      card.style.width = '50px';
+      card.style.height = '50px';
+      card.style.fontSize = '1.8em';
+      card.onclick = () => flipCard(card);
+      gameGrid.appendChild(card);
+    });
+  }
+
+  // Fonction pour retourner une carte
+  function flipCard(card) {
+    if (lockBoard) return;
+    if (card.classList.contains('matched')) return;
+    if (card === firstCard) return;
+
+    card.textContent = card.dataset.emoji;
+
+    if (!firstCard) {
+      firstCard = card;
+      return;
+    }
+
+    secondCard = card;
+    lockBoard = true;
+
+    setTimeout(checkMatch, 800);
+  }
+
+  // Vérifie si les deux cartes correspondent
+  function checkMatch() {
+    if (firstCard.dataset.emoji === secondCard.dataset.emoji) {
+      firstCard.classList.add('matched');
+      secondCard.classList.add('matched');
+      matchedCount += 2;
+      message.textContent = 'Bonne paire !';
+      if (matchedCount >= cards.length - (cards.length % 2)) {
+        message.innerHTML = `Bravo ! Vous avez terminé le niveau ${currentLevel} !<br>
+          Actualisez la page pour débloquer le niveau suivant.`;
+        // Débloquer le niveau suivant dans localStorage
+        if (currentLevel === unlockedLevel && unlockedLevel < levels.length) {
+          unlockedLevel++;
+          localStorage.setItem('unlockedLevel', unlockedLevel);
+        }
+      }
+    } else {
+      firstCard.textContent = '';
+      secondCard.textContent = '';
+      message.textContent = 'Essaye encore...';
+    }
+    firstCard = null;
+    secondCard = null;
+    lockBoard = false;
+  }
+
+  backButton.onclick = () => {
+    gameContainer.style.display = 'none';
+    levelSelection.style.display = 'flex';
+    message.textContent = '';
+  };
+
+  // Animation fruits tombants sur toute la durée
+  const fruits = ['🍎','🍌','🍒','🍇','🍉','🍋','🍓','🍍','🥝','🥥','🍑','🍈','🍐','🍊','🍏','🥭'];
+  function createFruit() {
+    const fruit = document.createElement('div');
+    fruit.className = 'fruit';
+    fruit.textContent = fruits[Math.floor(Math.random() * fruits.length)];
+    fruit.style.left = Math.random() * window.innerWidth + 'px';
+    fruit.style.animationDuration = (5 + Math.random() * 7) + 's';
+    fruit.style.fontSize = (20 + Math.random() * 30) + 'px';
+    fruit.style.opacity = 0.7 + Math.random() * 0.3;
+    document.body.appendChild(fruit);
+    setTimeout(() => {
+      fruit.remove();
+    }, 12000);
+  }
+  // Créer un fruit toutes les 400ms en permanence
+  setInterval(createFruit, 400);
+
+  // Initialisation
+  renderLevelSelection();
+</script>
+
+</body>
+</html>
