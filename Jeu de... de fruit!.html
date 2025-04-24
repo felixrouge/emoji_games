@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fruit Ninja simplifié 🍎🔪</title>
+<style>
+  body {
+    margin: 0; padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    user-select: none;
+  }
+  h1 {
+    margin: 20px 0 10px;
+    color: #333;
+  }
+  #score {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #222;
+  }
+  #game-area {
+    position: relative;
+    width: 400px;
+    height: 600px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+    touch-action: none;
+  }
+  .object {
+    position: absolute;
+    font-size: 3rem;
+    cursor: pointer;
+    user-select: none;
+    pointer-events: none;
+    transition: transform 0.2s;
+  }
+  #game-over {
+    margin-top: 20px;
+    font-size: 1.5rem;
+    color: #d32f2f;
+  }
+  #start-btn {
+    margin-top: 15px;
+    padding: 12px 30px;
+    font-size: 1.3rem;
+    border: none;
+    border-radius: 10px;
+    background: #4caf50;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  #start-btn:hover {
+    background: #45a049;
+  }
+  #trail {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+  }
+  .trail-segment {
+    position: absolute;
+    width: 20px; height: 20px;
+    background: rgba(255, 0, 0, 0.7);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: fadeOut 0.5s forwards;
+  }
+  @keyframes fadeOut {
+    to {opacity: 0; transform: translate(-50%, -50%) scale(0);}
+  }
+</style>
+</head>
+<body>
+
+<h1>Fruit Ninja simplifié 🍎🔪</h1>
+<div id="score">Score : 0</div>
+<div id="game-area"></div>
+<button id="start-btn">Démarrer</button>
+<div id="game-over"></div>
+
+<div id="trail"></div>
+
+<script>
+  const gameArea = document.getElementById('game-area');
+  const scoreDisplay = document.getElementById('score');
+  const startBtn = document.getElementById('start-btn');
+  const gameOverDisplay = document.getElementById('game-over');
+  const trailContainer = document.getElementById('trail');
+
+  const fruits = ['🍎', '🍌', '🍒', '🍇', '🍉', '🍋', '🍓', '🍍', '🥝', '🥥'];
+  const bomb = '💣';
+
+  let objects = [];
+  let score = 0;
+  let gameRunning = false;
+  let spawnInterval;
+  let animationFrameId;
+
+  // Pour détecter le mouvement de coupe
+  let isDrawing = false;
+  let lastPos = null;
+  let cutPath = [];
+
+  function random(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  // Crée un objet (fruit ou bombe) lancé du bas vers le haut
+  function createObject() {
+    const obj = document.createElement('div');
+    obj.classList.add('object');
+
+    const isBomb = Math.random() < 0.15; // 15% bombes
+    obj.textContent = isBomb ? bomb : fruits[Math.floor(Math.random() * fruits.length)];
+    obj.isBomb = isBomb;
+
+    // Position de départ (bas, aléatoire horizontal)
+    obj.x = random(50, gameArea.clientWidth - 50);
+    obj.y = gameArea.clientHeight + 30;
+    obj.style.left = obj.x + 'px';
+    obj.style.top = obj.y + 'px';
+
+    // Vitesse verticale (vers le haut)
+    obj.vy = random(6, 9);
+
+    // Vitesse horizontale (légère oscillation)
+    obj.vx = random(-2, 2);
+
+    // Rotation
+    obj.rotation = 0;
+    obj.vr = random(-5, 5);
+
+    gameArea.appendChild(obj);
+    objects.push(obj);
+  }
+
+  // Met à jour la position des objets
+  function updateObjects() {
+    for (let i = objects.length -1; i >= 0; i--) {
+      const obj = objects[i];
+      obj.x += obj.vx;
+      obj.y -= obj.vy;
+      obj.rotation += obj.vr;
+
+      obj.style.left = obj.x + 'px';
+      obj.style.top = obj.y + 'px';
+      obj.style.transform = `rotate(${obj.rotation}deg)`;
+
+      // Si objet est trop haut (sort de l’écran), on le supprime (manqué)
+      if (obj.y < -50) {
+        if (!obj.isBomb) {
+          endGame(false, 'Vous avez manqué un fruit ! 🍎💥');
+          return;
+        } else {
+          removeObject(obj);
+        }
+      }
+    }
+  }
+
+  // Supprime un objet du DOM et du tableau
+  function removeObject(obj) {
+    if (gameArea.contains(obj)) {
+      gameArea.removeChild(obj);
+    }
+    objects = objects.filter(o => o !== obj);
+  }
+
+  // Vérifie si la ligne de coupe intersecte un objet
+  function checkCut() {
+    if (cutPath.length < 2) return;
+
+    // On regarde pour chaque segment de la ligne de coupe
+    for (let i=0; i<cutPath.length -1; i++) {
+      const p1 = cutPath[i];
+      const p2 = cutPath[i+1];
+
+      for (let obj of [...objects]) {
+        const ox = obj.x;
+        const oy = obj.y;
+
+        // Distance minimale entre le segment (p1,p2) et le centre de l’objet
+        const dist = pointLineDistance(ox, oy, p1.x, p1.y, p2.x, p2.y);
+        if (dist < 30) { // seuil de coupe
+          if (obj.isBomb) {
+            endGame(false, 'Vous avez coupé une bombe ! 💥');
+            return;
+          } else {
+            score++;
+            scoreDisplay.textContent = 'Score : ' + score;
+            removeObject(obj);
+          }
+        }
+      }
+    }
+  }
+
+  // Calcul distance point à segment de droite (formule géométrique)
+  function pointLineDistance(px, py, x1, y1, x2, y2) {
+    const A = px - x1;
+    const B = py - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+
+    const dot = A * C + B * D;
+    const len_sq = C * C + D * D;
+    let param = -1;
+    if (len_sq !== 0) param = dot / len_sq;
+
+    let xx, yy;
+
+    if (param < 0) {
+      xx = x1;
+      yy = y1;
+    }
+    else if (param > 1) {
+      xx = x2;
+      yy = y2;
+    }
+    else {
+      xx = x1 + param * C;
+      yy = y1 + param * D;
+    }
+
+    const dx = px - xx;
+    const dy = py - yy;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // Affiche un petit cercle rouge sur le chemin de coupe
+  function drawTrail(x, y) {
+    const seg = document.createElement('div');
+    seg.classList.add('trail-segment');
+    seg.style.left = x + 'px';
+    seg.style.top = y + 'px';
+    trailContainer.appendChild(seg);
+    setTimeout(() => seg.remove(), 500);
+  }
+
+  // Boucle principale
+  function gameLoop() {
+    if (!gameRunning) return;
+    updateObjects();
+    checkCut();
+    animationFrameId = requestAnimationFrame(gameLoop);
+  }
+
+  function startGame() {
+    if (gameRunning) return;
+    score = 0;
+    scoreDisplay.textContent = 'Score : 0';
+    gameOverDisplay.textContent = '';
+    gameArea.innerHTML = '';
+    objects = [];
+    gameRunning = true;
+    startBtn.disabled = true;
+    cutPath = [];
+    lastPos = null;
+
+    // Lance un objet toutes les 800ms
+    spawnInterval = setInterval(createObject, 800);
+
+    animationFrameId = requestAnimationFrame(gameLoop);
+  }
+
+  function endGame(won, message) {
+    gameRunning = false;
+    clearInterval(spawnInterval);
+    cancelAnimationFrame(animationFrameId);
+    objects.forEach(removeObject);
+    startBtn.disabled = false;
+    gameOverDisplay.textContent = message || 'Game Over !';
+  }
+
+  // Gestion des événements souris/touch pour tracer la coupe
+  gameArea.addEventListener('mousedown', e => {
+    if (!gameRunning) return;
+    isDrawing = true;
+    cutPath = [];
+    addPoint(e);
+  });
+  gameArea.addEventListener('mousemove', e => {
+    if (!isDrawing) return;
+    addPoint(e);
+  });
+  window.addEventListener('mouseup', e => {
+    isDrawing = false;
+    cutPath = [];
+  });
+
+  // Support tactile
+  gameArea.addEventListener('touchstart', e => {
+    if (!gameRunning) return;
+    isDrawing = true;
+    cutPath = [];
+    addPoint(e.touches[0]);
+  });
+  gameArea.addEventListener('touchmove', e => {
+    if (!isDrawing) return;
+    addPoint(e.touches[0]);
+  });
+  window.addEventListener('touchend', e => {
+    isDrawing = false;
+    cutPath = [];
+  });
+
+  function addPoint(e) {
+    const rect = gameArea.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    cutPath.push({x, y});
+    drawTrail(x, y);
+  }
+
+  startBtn.addEventListener('click', startGame);
+</script>
+
+</body>
+</html>
