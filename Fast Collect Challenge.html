@@ -28,7 +28,7 @@
         canvas.height = window.innerHeight * 0.8;
 
         let player = { x: canvas.width / 2, y: canvas.height / 2, size: 20, emoji: "🕹" };
-        let ball = { x: 100, y: 100, speed: 3, baseSpeed: 3, emoji: "🏐" };
+        let ball = { x: 100, y: 100, speed: 4, baseSpeed: 4, emoji: "🏐" };
         let apples = [];
         let appleSize = 30;
         let score = 0;
@@ -36,11 +36,11 @@
         let speedBoostActive = false;
 
         function spawnApple() {
-            let isOp = Math.random() < 1; // 1 chance sur 20
+            let isOp = Math.random() < 0.05; // 1 chance sur 20
             apples.push({
                 x: Math.random() * (canvas.width - appleSize),
                 y: Math.random() * (canvas.height - appleSize),
-                size: isOp ? appleSize / 50 : appleSize,
+                size: isOp ? appleSize / 2 : appleSize,
                 emoji: isOp ? "🍏" : "🍎",
                 isOp: isOp
             });
@@ -59,7 +59,7 @@
         function activateSpeedBoost() {
             if (!speedBoostActive) {
                 speedBoostActive = true;
-                ball.speed *= 6;
+                ball.speed *= 7;
                 setTimeout(() => {
                     ball.speed = ball.baseSpeed;
                     speedBoostActive = false;
@@ -133,6 +133,5 @@
     </script>
 </body>
 </html>
-
 
 
