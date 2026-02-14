@@ -36,7 +36,7 @@
         let speedBoostActive = false;
 
         function spawnApple() {
-            let isOp = Math.random() < 0.05; // 1 chance sur 20
+            let isOp = Math.random() < 1; // 1 chance sur 20
             apples.push({
                 x: Math.random() * (canvas.width - appleSize),
                 y: Math.random() * (canvas.height - appleSize),
@@ -133,4 +133,5 @@
     </script>
 </body>
 </html>
+
 
