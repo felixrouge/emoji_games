@@ -28,7 +28,7 @@
         canvas.height = window.innerHeight * 0.8;
 
         let player = { x: canvas.width / 2, y: canvas.height / 2, size: 20, emoji: "🕹" };
-        let ball = { x: 100, y: 100, speed: 2, baseSpeed: 2, emoji: "🏐" };
+        let ball = { x: 100, y: 100, speed: 4, baseSpeed: 4, emoji: "🏐" };
         let apples = [];
         let appleSize = 30;
         let score = 0;
@@ -59,7 +59,7 @@
         function activateSpeedBoost() {
             if (!speedBoostActive) {
                 speedBoostActive = true;
-                ball.speed *= 2;
+                ball.speed *= 7;
                 setTimeout(() => {
                     ball.speed = ball.baseSpeed;
                     speedBoostActive = false;
@@ -133,3 +133,4 @@
     </script>
 </body>
 </html>
+
