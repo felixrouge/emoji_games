@@ -9,66 +9,77 @@
         body { margin: 0; overflow: hidden; background-color: #222; font-family: 'Nunito', sans-serif; }
         canvas { display: block; width: 100vw; height: 100vh; }
         
-        /* HUD Score & Timer */
         #score, #timer-display { position: absolute; color: white; font-size: 28px; font-weight: 900; z-index: 10; text-shadow: 2px 2px 4px black; top: 20px; }
-        #score { left: 20px; } 
-        #timer-display { right: 20px; }
-        
-        /* SONDAGE CENTRAL */
+        #score { left: 20px; } #timer-display { right: 20px; }
+
+        /* CONTENEUR DES MESSAGES EN HAUT */
+        #top-ui-wrapper {
+            position: fixed; top: 20px; left: 0; width: 100%;
+            display: flex; flex-direction: column; align-items: center;
+            z-index: 10000; pointer-events: none;
+        }
+
+        /* SONDAGE STYLE "STEAL A BRAINROT" */
         #poll-box { 
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.95); padding: 30px; border-radius: 20px; 
-            border: 4px solid #5865F2; color: white; display: none; z-index: 5000; 
-            min-width: 380px; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            background: #ADD8E6; padding: 20px; border-radius: 10px; 
+            border: 4px solid white; color: black; display: none; 
+            width: 550px; text-align: center; pointer-events: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); margin-bottom: 20px;
         }
-        .poll-btn { background: #333; color: white; border: 2px solid #555; padding: 12px; cursor: pointer; border-radius: 10px; margin: 10px 0; width: 100%; font-family: 'Nunito'; font-weight: 900; font-size: 16px; transition: 0.2s; }
-        .poll-btn:hover { background: #5865F2; border-color: white; }
-        .progress-container { background: #444; border-radius: 10px; height: 24px; width: 100%; margin-top: 5px; overflow: hidden; display: none; border: 1px solid #666; }
-        .progress-bar { height: 100%; width: 0%; background: #32CD32; transition: width 0.5s ease; }
-
-        /* MESSAGES ADMIN */
-        #msg-container-top { position: fixed; top: 70px; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; z-index: 10000; pointer-events: none; }
-        #msg-container-bottom { position: fixed; bottom: 150px; left: 0; width: 100%; display: flex; flex-direction: column-reverse; align-items: center; z-index: 10000; pointer-events: none; }
-        .admin-msg { font-size: 48px; font-weight: 900; text-align: center; text-shadow: 2px 2px 10px rgba(0,0,0,0.9); margin: 5px; width: 100%; }
+        #poll-q { font-size: 28px; font-weight: 900; margin-bottom: 15px; text-transform: uppercase; }
         
-        .txt-violet { color: #A020F0; } /* Violet pour "Green time" et "timer" */
-        .rainbow-text { 
-            background: linear-gradient(to right, #ff9999, #ffcc99, #ffff99, #99ff99, #99ccff, #cc99ff); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-            display: inline-block; 
+        .poll-ui-row { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; }
+        .vote-count { font-size: 30px; font-weight: 900; min-width: 40px; }
+        
+        .dual-bar { display: flex; width: 400px; height: 35px; border: 4px solid black; overflow: hidden; border-radius: 8px; background: #444; }
+        #bar-1 { width: 50%; background: #FF4444; border-right: 2px solid black; transition: width 0.4s ease-out; }
+        #bar-2 { width: 50%; background: #4444FF; transition: width 0.4s ease-out; }
+
+        .poll-buttons { display: flex; justify-content: center; gap: 30px; }
+        .poll-btn { 
+            padding: 10px 30px; border-radius: 8px; border: 4px solid black; 
+            font-weight: 900; cursor: pointer; color: white; font-family: 'Nunito'; font-size: 18px;
+            transition: transform 0.1s;
         }
+        .poll-btn:active { transform: scale(0.95); }
+        #poll-o1 { background: #FF4444; }
+        #poll-o2 { background: #4444FF; }
 
-        /* HUD ÉVÉNEMENTS (BAS DROITE) */
+        /* MESSAGES D'ANNONCE (SOUS LE SONDAGE) */
+        #msg-container-top { width: 100%; display: flex; flex-direction: column; align-items: center; }
+        .admin-msg { font-size: 50px; font-weight: 900; color: white; text-shadow: 3px 3px 10px black; margin: 10px; }
+
+        /* HUD BAS DROITE */
         #hud-events { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: row-reverse; gap: 15px; z-index: 1000; }
-        .event-card { display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 12px; border: 2px solid #555; min-width: 80px; }
-        .img-container { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; position: relative; font-size: 40px; }
-        .img-container img { width: 100%; height: 100%; object-fit: contain; position: absolute; z-index: 2; border-radius: 8px; }
-        .event-timer { color: white; font-weight: 900; font-size: 18px; margin-top: 5px; }
+        .event-card { display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.85); padding: 10px; border-radius: 12px; border: 2px solid #555; min-width: 85px; }
+        .img-container { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+        .event-timer { color: white; font-weight: 900; font-size: 20px; margin-top: 5px; }
 
-        #discord-btn { position: absolute; bottom: 20px; left: 20px; z-index: 20; background: #5865F2; color: white; padding: 12px 18px; border-radius: 8px; text-decoration: none; font-weight: 900; }
+        .rainbow-text { background: linear-gradient(to right, #ff9999, #ffff99, #99ff99, #99ccff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .txt-violet { color: #A020F0; }
     </style>
 </head>
 <body>
     <div id="score">Score: 0</div>
     <div id="timer-display">Timer: 60</div>
     
-    <div id="poll-box">
-        <h2 id="poll-q">Chargement du sondage...</h2>
-        <div id="poll-options">
-            <button class="poll-btn" onclick="vote(1)" id="poll-o1">Option A</button>
-            <div class="progress-container" id="cont-1"><div class="progress-bar" id="bar-1"></div></div>
-            <button class="poll-btn" onclick="vote(2)" id="poll-o2">Option B</button>
-            <div class="progress-container" id="cont-2"><div class="progress-bar" id="bar-2"></div></div>
+    <div id="top-ui-wrapper">
+        <div id="poll-box">
+            <div id="poll-q">Question ?</div>
+            <div class="poll-ui-row">
+                <span class="vote-count" id="count-1">0</span>
+                <div class="dual-bar"><div id="bar-1"></div><div id="bar-2"></div></div>
+                <span class="vote-count" id="count-2">0</span>
+            </div>
+            <div class="poll-buttons">
+                <button class="poll-btn" id="poll-o1" onclick="vote(1)">Option A</button>
+                <button class="poll-btn" id="poll-o2" onclick="vote(2)">Option B</button>
+            </div>
         </div>
-        <p id="poll-total" style="font-size: 14px; color: #aaa; margin-top: 15px; font-weight: 700;"></p>
+        <div id="msg-container-top"></div>
     </div>
 
-    <div id="msg-container-top"></div>
-    <div id="msg-container-bottom"></div>
     <div id="hud-events"></div>
-
-    <a href="https://discord.gg/CP9hFvjDDC" target="_blank" id="discord-btn">Join Discord</a>
     <canvas id="gameCanvas"></canvas>
 
     <script>
@@ -77,151 +88,106 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resize); resize();
-
         let timeLeft = 60, score = 0, gameActive = true, currentLuck = 0.05;
-        let player = { x: 0, y: 0 }, ball = { x: 100, y: 100, speed: 4, baseSpeed: 4, emoji: "🏐" };
+        let player = { x: 0, y: 0 }, ball = { x: 100, y: 100, speed: 4, baseSpeed: 4 };
         let greenAppleBoost = 3, apples = [], activeTimers = {};
         let votes = { 1: 0, 2: 0, total: 0 };
+
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
 
         channel.subscribe((msg) => {
             const d = msg.data;
 
-            // 1. ANNONCE GLOBALE
-            if (msg.name === 'announce') {
-                showAdvancedMsg(d.text, 'top', {color: 'white'});
-            }
+            if (msg.name === 'announce') showMsg(d.text, {color: 'white'});
 
-            // 2. SONDAGE
             if (msg.name === 'poll') {
                 votes = { 1: 0, 2: 0, total: 0 };
                 document.getElementById('poll-box').style.display = 'block';
                 document.getElementById('poll-q').innerText = d.q;
                 document.getElementById('poll-o1').innerText = d.o1;
                 document.getElementById('poll-o2').innerText = d.o2;
-                document.getElementById('poll-o1').style.display = 'block';
-                document.getElementById('poll-o2').style.display = 'block';
-                document.getElementById('cont-1').style.display = 'none';
-                document.getElementById('cont-2').style.display = 'none';
-                document.getElementById('poll-total').innerText = "Videz votre sac ! Votez !";
-                setTimeout(() => { document.getElementById('poll-box').style.display = 'none'; }, 15000);
-            }
-            if (msg.name === 'vote_sync') {
-                votes[d.opt]++; votes.total++;
+                document.getElementById('poll-o1').style.visibility = 'visible';
+                document.getElementById('poll-o2').style.visibility = 'visible';
                 updateBars();
+                setTimeout(() => document.getElementById('poll-box').style.display = 'none', 20000);
             }
 
-            // 3. LUCK
+            if (msg.name === 'vote_sync') { votes[d.opt]++; votes.total++; updateBars(); }
+
             if (msg.name === 'luck') {
                 currentLuck = d.val;
-                showAdvancedMsg(`FelixRouge activated ${d.mult}x luck!`, 'bottom', getLuckStyle(d.mult));
-                startHudTimer('luck', getLuckImg(d.mult), d.time, false, () => currentLuck = 0.05);
+                showMsg(`FelixRouge activated ${d.mult}x luck!`, getLuckStyle(d.mult));
+                startHudTimer('luck', '🍀', d.time, () => currentLuck = 0.05);
             }
 
-            // 4. GREEN TIME
             if (msg.name === 'greentime') {
-                let oldL = currentLuck; currentLuck = 1.0;
-                showAdvancedMsg(`FelixRouge activated <span class="txt-violet">Green time</span>!`, 'bottom', getGTStyle(d.time));
-                startHudTimer('gt', "https://static.vecteezy.com/system/resources/previews/016/733/263/non_2x/cute-illustration-of-a-green-apple-in-cartoon-style-on-isolated-background-vector.jpg", d.time, true, () => currentLuck = oldL);
+                let old = currentLuck; currentLuck = 1.0;
+                showMsg(`FelixRouge activated <span class="txt-violet">Green time</span>!`, getLuckStyle(8));
+                startHudTimer('gt', '🍏', d.time, () => currentLuck = old);
             }
 
-            // 5. TIMER
-            if (msg.name === 'addtime') {
-                timeLeft += d.seconds;
-                showAdvancedMsg(`FelixRouge added ${d.seconds}s to your <span class="txt-violet">timer</span>!`, 'bottom', getTStyle(d.seconds));
-            }
-
-            // 6. SPAWN
-            if (msg.name === 'spawn') {
-                spawnApple(true, d.count);
-                showAdvancedMsg(`FelixRouge spawned ${d.count} Green Apples!`, 'bottom', getSStyle(d.count));
-            }
-
-            // 7. SPEEDS
             if (msg.name === 'ballSpeed') {
                 ball.baseSpeed = 4 * d.mult; ball.speed = ball.baseSpeed;
-                showAdvancedMsg(`FelixRouge set ball speed to x${d.mult}`, 'bottom', {color: d.mult >= 2 ? 'black' : 'white'});
-            }
-            if (msg.name === 'appleSpeed') {
-                greenAppleBoost = d.mult;
-                let style = d.mult == 3 ? {color:'#32CD32'} : (d.mult == 5 ? {color:'#DA70D6'} : {isRainbow: true});
-                showAdvancedMsg(`FelixRouge set apple boost to x${d.mult}`, 'bottom', style);
+                showMsg(`FelixRouge set ball speed to x${d.mult}`, {color: d.mult>=2?'black':'white'});
             }
 
-            // 8. EMERGENCY
-            if (msg.name === 'clearLuck') {
-                currentLuck = 0.05;
-                for(let id in activeTimers) { clearInterval(activeTimers[id].interval); let c = document.getElementById('event-'+id); if(c) c.remove(); }
-                activeTimers = {};
+            if (msg.name === 'appleSpeed') {
+                greenAppleBoost = d.mult;
+                showMsg(`FelixRouge set apple boost to x${d.mult}`, d.mult >= 7 ? {isRainbow:true} : {color:'#32CD32'});
             }
+
+            if (msg.name === 'addtime') { timeLeft += d.seconds; showMsg(`FelixRouge added ${d.seconds}s to your <span class="txt-violet">timer</span>!`, {color: 'white'}); }
+            if (msg.name === 'spawn') spawnApple(true, d.count);
             if (msg.name === 'reset') location.reload();
         });
 
-        // --- FONCTIONS LOGIQUES ---
-
         function vote(opt) {
             channel.publish('vote_sync', {opt: opt});
-            document.getElementById('poll-o1').style.display = 'none';
-            document.getElementById('poll-o2').style.display = 'none';
-            document.getElementById('cont-1').style.display = 'block';
-            document.getElementById('cont-2').style.display = 'block';
+            document.getElementById('poll-o1').style.visibility = 'hidden';
+            document.getElementById('poll-o2').style.visibility = 'hidden';
         }
 
         function updateBars() {
-            let p1 = (votes[1] / votes.total) * 100;
-            let p2 = (votes[2] / votes.total) * 100;
+            let p1 = votes.total === 0 ? 50 : (votes[1] / votes.total) * 100;
+            let p2 = votes.total === 0 ? 50 : (votes[2] / votes.total) * 100;
             document.getElementById('bar-1').style.width = p1 + "%";
             document.getElementById('bar-2').style.width = p2 + "%";
-            document.getElementById('poll-total').innerText = `${votes.total} votes enregistrés`;
+            document.getElementById('count-1').innerText = votes[1];
+            document.getElementById('count-2').innerText = votes[2];
         }
 
-        function showAdvancedMsg(html, pos, style) {
-            const container = document.getElementById(pos === 'top' ? 'msg-container-top' : 'msg-container-bottom');
+        function showMsg(html, style) {
             const div = document.createElement('div');
             div.className = 'admin-msg';
             if(style.isRainbow) div.innerHTML = `<span class="rainbow-text">${html}</span>`;
-            else { 
-                div.style.color = style.color; 
-                div.innerHTML = html; 
-                if(style.color === 'black') div.style.textShadow = "0px 0px 8px white"; 
-            }
-            container.appendChild(div);
+            else { div.innerHTML = html; div.style.color = style.color; if(style.color==='black') div.style.textShadow="0 0 10px white"; }
+            document.getElementById('msg-container-top').appendChild(div);
             setTimeout(() => div.remove(), 5000);
         }
 
-        function startHudTimer(id, url, dur, isA, onE) {
-            let container = document.getElementById('hud-events');
-            if (activeTimers[id]) { activeTimers[id].remaining += dur; return; }
-            let card = document.createElement('div');
-            card.className = 'event-card'; card.id = 'event-' + id;
-            card.innerHTML = `<div class="img-container"><span>${isA?'🍏':'🍀'}</span><img src="${url}" onerror="this.style.display='none'"></div><div class="event-timer" id="timer-${id}">${dur}s</div>`;
-            container.appendChild(card);
-            activeTimers[id] = { remaining: dur, interval: setInterval(() => {
-                activeTimers[id].remaining--;
-                if (activeTimers[id].remaining <= 0 || !gameActive) { 
-                    clearInterval(activeTimers[id].interval); card.remove(); delete activeTimers[id]; if(onE) onE(); 
-                } else { 
-                    let t = document.getElementById('timer-' + id); if(t) t.innerText = activeTimers[id].remaining + "s"; 
-                }
+        function startHudTimer(id, emoji, dur, onEnd) {
+            if (activeTimers[id]) { activeTimers[id].rem += dur; return; }
+            const card = document.createElement('div');
+            card.className = 'event-card'; card.id = 'ev-'+id;
+            card.innerHTML = `<div class="img-container">${emoji}</div><div class="event-timer" id="t-${id}">${dur}s</div>`;
+            document.getElementById('hud-events').appendChild(card);
+            activeTimers[id] = { rem: dur, interval: setInterval(() => {
+                activeTimers[id].rem--;
+                if(activeTimers[id].rem <= 0) { clearInterval(activeTimers[id].interval); card.remove(); delete activeTimers[id]; onEnd(); }
+                else document.getElementById('t-'+id).innerText = activeTimers[id].rem + "s";
             }, 1000)};
         }
 
-        // --- STYLES ET IMAGES ---
-        function getLuckImg(m) {
-            const imgs = { 2: "https://static.wikia.nocookie.net/stealabr/images/e/ea/2xLuck.webp", 4: "https://static.wikia.nocookie.net/stealabr/images/f/f1/4xLuck.webp", 6: "https://static.wikia.nocookie.net/stealabr/images/9/9e/Clover5.webp", 8: "https://static.wikia.nocookie.net/stealabr/images/7/76/CloverStack.png", 10: "https://static.wikia.nocookie.net/stealabr/images/f/fe/10x.png" };
-            return imgs[m] || "";
+        function getLuckStyle(m) {
+            if(m <= 2) return {color:'#32CD32'}; if(m <= 4) return {color:'#DAA520'};
+            if(m <= 6) return {color:'#DA70D6'}; return {isRainbow:true};
         }
-        function getLuckStyle(m) { if(m==2) return {color:'#32CD32'}; if(m==4) return {color:'#DAA520'}; if(m==6) return {color:'#DA70D6'}; if(m==8) return {isRainbow:true}; if(m==10) return {color:'black'}; return {color:'white'}; }
-        function getGTStyle(s) { if(s==5) return {color:'#32CD32'}; if(s==10) return {color:'#DAA520'}; if(s==15) return {color:'#DA70D6'}; if(s==20) return {isRainbow:true}; if(s==30) return {color:'black'}; return {color:'white'}; }
-        function getTStyle(s) { if(s==10) return {color:'#32CD32'}; if(s==15) return {color:'#DAA520'}; if(s==20) return {color:'#DA70D6'}; if(s>=30) return {isRainbow:true}; return {color:'white'}; }
-        function getSStyle(c) { if(c==3) return {color:'#DAA520'}; if(c==5) return {color:'#DA70D6'}; if(c==7) return {isRainbow:true}; if(c>=10) return {color:'black'}; return {color:'white'}; }
 
-        // --- MOTEUR DE JEU ---
         function spawnApple(fG, c) {
             for(let i=0; i<c; i++) {
-                let isOp = fG || Math.random() < currentLuck;
-                apples.push({ x: Math.random()*(canvas.width-60)+30, y: Math.random()*(canvas.height-60)+30, size: isOp?22:36, emoji: isOp?"🍏":"🍎", isOp:isOp });
+                let isG = fG || Math.random() < currentLuck;
+                apples.push({ x: Math.random()*(canvas.width-60)+30, y: Math.random()*(canvas.height-60)+30, isG: isG });
             }
         }
 
@@ -229,24 +195,24 @@
             if(!gameActive) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             let dx = player.x - ball.x, dy = player.y - ball.y, dist = Math.sqrt(dx*dx+dy*dy);
-            if(dist > 35) { ball.x += (dx/dist)*ball.speed; ball.y += (dy/dist)*ball.speed; }
-            ctx.font = "40px Nunito"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.fillText("🕹", player.x, player.y); ctx.fillText(ball.emoji, ball.x, ball.y);
+            if(dist > 30) { ball.x += (dx/dist)*ball.speed; ball.y += (dy/dist)*ball.speed; }
+            ctx.font = "40px Nunito"; ctx.textAlign = "center";
+            ctx.fillText("🕹", player.x, player.y); ctx.fillText("🏐", ball.x, ball.y);
             apples = apples.filter(a => {
-                let adx = ball.x - a.x, ady = ball.y - a.y;
-                if(Math.sqrt(adx*adx+ady*ady) < a.size) {
-                    score += a.isOp?3:1; document.getElementById("score").innerText = "Score: " + score;
-                    if(a.isOp) { ball.speed = ball.baseSpeed * greenAppleBoost; setTimeout(() => ball.speed = ball.baseSpeed, 3000); }
+                let d = Math.sqrt((ball.x-a.x)**2 + (ball.y-a.y)**2);
+                if(d < 30) {
+                    score += a.isG ? 3 : 1; document.getElementById("score").innerText = "Score: " + score;
+                    if(a.isG) { ball.speed = ball.baseSpeed * greenAppleBoost; setTimeout(()=>ball.speed=ball.baseSpeed, 3000); }
                     return false;
                 }
-                ctx.font = a.size + "px Nunito"; ctx.fillText(a.emoji, a.x, a.y); return true;
+                ctx.fillText(a.isG?"🍏":"🍎", a.x, a.y); return true;
             });
             requestAnimationFrame(update);
         }
 
         function countdown() {
-            if (timeLeft > 0) { timeLeft--; document.getElementById("timer-display").innerText = "Timer: " + timeLeft; setTimeout(countdown, 1000); }
-            else { gameActive = false; setTimeout(() => { if(confirm("C'est fini ! Rejouer ?")) location.reload(); }, 100); }
+            if(timeLeft > 0) { timeLeft--; document.getElementById("timer-display").innerText = "Timer: " + timeLeft; setTimeout(countdown, 1000); }
+            else { gameActive = false; alert("Temps écoulé ! Score final: " + score); location.reload(); }
         }
 
         window.addEventListener("mousemove", (e) => { player.x = e.clientX; player.y = e.clientY; });
