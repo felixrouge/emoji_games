@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">T
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,10 +8,8 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: 
-        linear-gradient(135deg, #a8e6ff99, #6cc6ff99),
-        url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
-      background-size: cover;
+      /* Fond bleu très clair */
+      background: #e0f7ff; 
       text-align: center;
       color: white;
       min-height: 100vh;
@@ -24,18 +22,11 @@
       justify-content: space-between;
       padding: 15px 20px;
       background: white;
-      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     }
 
-    .logo {
-      height: 50px;
-    }
-
-    .title {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #333;
-    }
+    .logo { height: 50px; }
+    .title { font-size: 1.5rem; font-weight: bold; color: #333; }
 
     .youtube-button {
       background-color: #FF0000;
@@ -46,9 +37,17 @@
       font-weight: bold;
       transition: background 0.3s;
     }
+    .youtube-button:hover { background-color: #CC0000; }
 
-    .youtube-button:hover {
-      background-color: #CC0000;
+    /* Texte de mise à jour */
+    .update-banner {
+      background: #ff4757;
+      color: white;
+      padding: 10px;
+      font-weight: bold;
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
     .game-container {
@@ -71,8 +70,15 @@
       transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     }
 
+    /* Style pour la carte GÉANTE */
+    .game-card.featured {
+      grid-column: 1 / -1; /* Prend toute la largeur */
+      height: 350px; /* Très grande */
+      border: 5px solid #ff4757;
+    }
+
     .game-card:hover {
-      transform: scale(1.08);
+      transform: scale(1.05);
       box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
     }
 
@@ -83,9 +89,7 @@
       transition: opacity 0.3s;
     }
 
-    .game-card:hover img {
-      opacity: 0.2;
-    }
+    .game-card:hover img { opacity: 0.2; }
 
     .game-title {
       position: absolute;
@@ -99,24 +103,26 @@
       transition: opacity 0.3s;
     }
 
-    .game-card:hover .game-title {
-      opacity: 1;
+    .featured .game-title {
+        font-size: 2.5rem; /* Texte plus gros pour la grande carte */
     }
 
-    /* Fleurs qui tombent */
-    .emoji-flower {
+    .game-card:hover .game-title { opacity: 1; }
+
+    /* Emojis qui tombent */
+    .emoji-fall {
       position: fixed;
       top: -2em;
-      font-size: 2.2rem;
+      font-size: 2rem;
       pointer-events: none;
       z-index: 1;
-      animation: fall-flower linear forwards;
+      animation: fall linear forwards;
     }
 
-    @keyframes fall-flower {
+    @keyframes fall {
       to {
         transform: translateY(110vh) rotate(360deg);
-        opacity: 0.7;
+        opacity: 0.5;
       }
     }
   </style>
@@ -126,11 +132,20 @@
     <img src="logo emoji games.webp" alt="Emoji Games" class="logo">
     <div class="title">🎮🎭 Emoji Games</div>
     <a href="https://youtube.com/@emoji_games_yt" target="_blank" class="youtube-button">
-      📺 La chaîne de notre projet sur YouTube
+      📺 YouTube
     </a>
   </div>
 
+  <div class="update-banner">
+    NEW UPDATE : ADDED ADMIN ABUSE
+  </div>
+
   <div class="game-container">
+    <div class="game-card featured" onclick="startGame('Fast Collect Challenge.html')">
+      <img src="fast collect challeng.png" alt="Fast Collect Challenge">
+      <div class="game-title">Fast Collect Challenge</div>
+    </div>
+
     <div class="game-card" onclick="startGame('Echapper les couteaux.html')">
       <img src="echapper les cpouteaux.png" alt="Échapper les Couteaux">
       <div class="game-title">Échapper les Couteaux</div>
@@ -139,11 +154,6 @@
     <div class="game-card" onclick="startGame('SURIMI SABRE.html')">
       <img src="surimi sabre.png" alt="Surimi Sabre">
       <div class="game-title">Surimi Sabre</div>
-    </div>
-
-    <div class="game-card" onclick="startGame('Fast Collect Challenge.html')">
-      <img src="fast collect challeng.png" alt="Fast Collect Challenge">
-      <div class="game-title">Fast Collect Challenge</div>
     </div>
 
     <div class="game-card" onclick="startGame('The Mafia Kills.html')">
@@ -172,20 +182,21 @@
       window.location.href = gameUrl;
     }
 
-    // Fleurs qui tombent
-    const flowers = ['🌸','🌼','🌺','🌷'];
-    function createFlower() {
-      const flower = document.createElement('div');
-      flower.className = 'emoji-flower';
-      flower.textContent = flowers[Math.floor(Math.random() * flowers.length)];
-      flower.style.left = Math.random() * 98 + 'vw';
-      flower.style.animationDuration = (Math.random() * 2 + 3) + 's';
-      flower.style.opacity = Math.random() * 0.5 + 0.5;
-      document.body.appendChild(flower);
-      setTimeout(() => flower.remove(), 5000);
+    // Emojis aléatoires qui tombent
+    const emojis = ['🎮','🎭','🔥','⭐','🍀','🍎','🚀','💎','👻','👾','🍕','😎','💥','✨'];
+    
+    function createEmoji() {
+      const emoji = document.createElement('div');
+      emoji.className = 'emoji-fall';
+      emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      emoji.style.left = Math.random() * 98 + 'vw';
+      emoji.style.animationDuration = (Math.random() * 2 + 3) + 's';
+      emoji.style.opacity = Math.random() * 0.5 + 0.3;
+      document.body.appendChild(emoji);
+      setTimeout(() => emoji.remove(), 5000);
     }
-    setInterval(createFlower, 350);
+    
+    setInterval(createEmoji, 250); // Un peu plus rapide pour plus d'ambiance
   </script>
 </body>
 </html>
-
