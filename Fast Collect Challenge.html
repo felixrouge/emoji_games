@@ -3,33 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fast Collect Challenge Upd1</title>
+    <title>Fast Collect Challenge - Upd1</title></title>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+    
     <style>
-        body { margin: 0; overflow: hidden; background-color: #222; font-family: Arial, sans-serif; }
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #222; 
+            font-family: 'Nunito', sans-serif; 
+        }
         canvas { display: block; width: 100vw; height: 100vh; }
-        #score, #timer-display { position: absolute; color: white; font-size: 24px; z-index: 10; text-shadow: 2px 2px 4px black; }
+        
+        #score, #timer-display { 
+            position: absolute; 
+            color: white; 
+            font-size: 28px; 
+            font-weight: 900;
+            z-index: 10; 
+            text-shadow: 2px 2px 4px black; 
+        }
         #score { left: 20px; top: 20px; }
         #timer-display { right: 20px; top: 20px; }
         
-        /* Conteneurs de messages */
         #msg-container-top { position: fixed; top: 60px; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; z-index: 10000; pointer-events: none; }
         #msg-container-bottom { position: fixed; bottom: 150px; left: 0; width: 100%; display: flex; flex-direction: column-reverse; align-items: center; z-index: 10000; pointer-events: none; }
         
-        .admin-msg { font-size: 44px; font-weight: bold; text-align: center; text-shadow: 2px 2px 8px rgba(0,0,0,0.8); margin: 5px 0; width: 100%; }
+        .admin-msg { 
+            font-size: 48px; 
+            font-weight: 900; 
+            text-align: center; 
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.9); 
+            margin: 5px 0; 
+            width: 100%; 
+        }
         
-        /* Classes Spéciales */
-        .txt-violet { color: #8A2BE2; } /* Violet (BlueViolet) différent du mauve */
-        .rainbow-text { background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }
+        /* Couleurs Spécifiques */
+        .txt-violet { color: #A020F0; } /* Violet vif */
+        
+        /* Arc-en-ciel Clair / Pastel */
+        .rainbow-text { 
+            background: linear-gradient(to right, #ff9999, #ffcc99, #ffff99, #99ff99, #99ccff, #cc99ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+            filter: drop-shadow(0px 0px 2px rgba(255,255,255,0.3));
+        }
 
         /* HUD */
         #hud-events { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: row-reverse; gap: 15px; z-index: 1000; }
-        .event-card { display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; border: 2px solid #555; min-width: 80px; }
+        .event-card { 
+            display: flex; flex-direction: column; align-items: center; 
+            background: rgba(0,0,0,0.8); padding: 10px; border-radius: 12px; 
+            border: 2px solid #555; min-width: 80px; 
+        }
         .img-container { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; position: relative; font-size: 40px; }
         .img-container img { width: 100%; height: 100%; object-fit: contain; position: absolute; z-index: 2; }
-        .event-timer { color: white; font-weight: bold; font-size: 18px; margin-top: 5px; }
+        .event-timer { color: white; font-weight: 900; font-size: 20px; margin-top: 5px; }
 
-        #discord-btn { position: absolute; bottom: 20px; left: 20px; z-index: 20; background: #5865F2; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 14px; }
+        #discord-btn { 
+            position: absolute; bottom: 20px; left: 20px; z-index: 20; 
+            background: #5865F2; color: white; padding: 12px 18px; 
+            border-radius: 8px; text-decoration: none; font-weight: 900; 
+        }
     </style>
 </head>
 <body>
@@ -68,55 +105,50 @@
         };
 
         channel.subscribe((msg) => {
-            const data = msg.data;
+            const d = msg.data;
             
-            // 1. LUCK
             if (msg.name === 'luck') {
-                currentLuck = data.val;
-                let content = `FelixRouge activated ${data.mult}x luck!`;
-                showAdvancedMsg(content, 'bottom', getLuckStyle(data.mult));
-                startHudTimer('luck', LUCK_IMAGES[data.mult], data.time, false, () => { currentLuck = 0.05; });
+                currentLuck = d.val;
+                showAdvancedMsg(`FelixRouge activated ${d.mult}x luck!`, 'bottom', getLuckStyle(d.mult));
+                startHudTimer('luck', LUCK_IMAGES[d.mult], d.time, false, () => { currentLuck = 0.05; });
             }
 
-            // 2. GREEN TIME
             if (msg.name === 'greentime') {
                 let oldL = currentLuck; currentLuck = 1.0;
-                let content = `FelixRouge activated <span class="txt-violet">Green time</span>!`;
-                showAdvancedMsg(content, 'bottom', getGreenTimeStyle(data.time));
-                startHudTimer('greentime', "https://static.vecteezy.com/system/resources/previews/016/733/263/non_2x/cute-illustration-of-a-green-apple-in-cartoon-style-on-isolated-background-vector.jpg", data.time, true, () => { currentLuck = oldL; });
+                showAdvancedMsg(`FelixRouge activated <span class="txt-violet">Green time</span>!`, 'bottom', getGTStyle(d.time));
+                startHudTimer('gt', "https://static.vecteezy.com/system/resources/previews/016/733/263/non_2x/cute-illustration-of-a-green-apple-in-cartoon-style-on-isolated-background-vector.jpg", d.time, true, () => { currentLuck = oldL; });
             }
 
-            // 3. ADD TIMER
             if (msg.name === 'addtime') {
-                timeLeft += data.seconds;
-                let content = `FelixRouge added ${data.seconds}s to your <span class="txt-violet">timer</span>!`;
-                showAdvancedMsg(content, 'bottom', getTimerAddStyle(data.seconds));
+                timeLeft += d.seconds;
+                showAdvancedMsg(`FelixRouge added ${d.seconds}s to your <span class="txt-violet">timer</span>!`, 'bottom', getTStyle(d.seconds));
             }
 
-            // 4. SPAWN GREEN APPLES
             if (msg.name === 'spawn') {
-                spawnApple(true, data.count);
-                let content = `FelixRouge spawned ${data.count} Green Apples!`;
-                showAdvancedMsg(content, 'bottom', getSpawnStyle(data.count));
+                spawnApple(true, d.count);
+                showAdvancedMsg(`FelixRouge spawned ${d.count} Green Apples!`, 'bottom', getSStyle(d.count));
             }
 
-            if (msg.name === 'announce') showAdvancedMsg(data.text, 'top', {color: 'white'});
-            if (msg.name === 'clearLuck') clearLuckEffect();
+            if (msg.name === 'announce') showAdvancedMsg(d.text, 'top', {color: 'white'});
+            if (msg.name === 'clearLuck') {
+                currentLuck = 0.05;
+                if(activeTimers['luck']) { clearInterval(activeTimers['luck'].interval); let c = document.getElementById('event-luck'); if(c) c.remove(); delete activeTimers['luck']; }
+            }
             if (msg.name === 'reset') location.reload();
         });
 
-        // LOGIQUE DES STYLES (COULEURS)
+        // STYLES Nunito / Couleurs
         function getLuckStyle(m) {
-            if(m == 2) return {color: 'lime'};
-            if(m == 4) return {color: '#DAA520'};
+            if(m == 2) return {color: '#32CD32'}; // Lime
+            if(m == 4) return {color: '#DAA520'}; // Jaune foncé
             if(m == 6) return {color: '#DA70D6'}; // Mauve
             if(m == 8) return {isRainbow: true};
             if(m == 10) return {color: 'black'};
             return {color: 'white'};
         }
 
-        function getGreenTimeStyle(s) {
-            if(s == 5) return {color: 'lime'};
+        function getGTStyle(s) {
+            if(s == 5) return {color: '#32CD32'};
             if(s == 10) return {color: '#DAA520'};
             if(s == 15) return {color: '#DA70D6'};
             if(s == 20) return {isRainbow: true};
@@ -124,15 +156,15 @@
             return {color: 'white'};
         }
 
-        function getTimerAddStyle(s) {
-            if(s == 10) return {color: 'lime'};
+        function getTStyle(s) {
+            if(s == 10) return {color: '#32CD32'};
             if(s == 15) return {color: '#DAA520'};
             if(s == 20) return {color: '#DA70D6'};
             if(s >= 30) return {isRainbow: true};
             return {color: 'white'};
         }
 
-        function getSpawnStyle(c) {
+        function getSStyle(c) {
             if(c == 3) return {color: '#DAA520'};
             if(c == 5) return {color: '#DA70D6'};
             if(c == 7) return {isRainbow: true};
@@ -140,51 +172,40 @@
             return {color: 'white'};
         }
 
-        function showAdvancedMsg(htmlContent, pos, style) {
+        function showAdvancedMsg(html, pos, style) {
             const container = document.getElementById(pos === 'top' ? 'msg-container-top' : 'msg-container-bottom');
             const div = document.createElement('div');
             div.className = 'admin-msg';
-            
             if(style.isRainbow) {
-                div.innerHTML = `<span class="rainbow-text">${htmlContent}</span>`;
+                div.innerHTML = `<span class="rainbow-text">${html}</span>`;
             } else {
                 div.style.color = style.color;
-                div.innerHTML = htmlContent;
+                div.innerHTML = html;
+                if(style.color === 'black') div.style.textShadow = "0px 0px 8px rgba(255,255,255,0.7)";
             }
-            
             container.appendChild(div);
             setTimeout(() => div.remove(), 5000);
         }
 
-        // --- FONCTIONS JEU DE BASE ---
-        function clearLuckEffect() {
-            currentLuck = 0.05;
-            if(activeTimers['luck']) {
-                clearInterval(activeTimers['luck'].interval);
-                let card = document.getElementById('event-luck'); if(card) card.remove();
-                delete activeTimers['luck'];
-            }
-        }
-
-        function startHudTimer(id, imgUrl, duration, isApple, onEnd) {
+        function startHudTimer(id, url, dur, isA, onE) {
             let container = document.getElementById('hud-events');
-            if (activeTimers[id]) { activeTimers[id].remaining += duration; return; }
+            if (activeTimers[id]) { activeTimers[id].remaining += dur; return; }
             let card = document.createElement('div');
             card.className = 'event-card'; card.id = 'event-' + id;
-            card.innerHTML = `<div class="img-container"><span>${isApple?'🍏':'🍀'}</span><img src="${imgUrl}" onerror="this.style.display='none'"></div><div class="event-timer" id="timer-${id}">${duration}s</div>`;
+            card.innerHTML = `<div class="img-container"><span>${isA?'🍏':'🍀'}</span><img src="${url}" onerror="this.style.display='none'"></div><div class="event-timer" id="timer-${id}">${dur}s</div>`;
             container.appendChild(card);
-            activeTimers[id] = { remaining: duration, interval: setInterval(() => {
+            activeTimers[id] = { remaining: dur, interval: setInterval(() => {
                 activeTimers[id].remaining--;
-                if (activeTimers[id].remaining <= 0 || !gameActive) { clearInterval(activeTimers[id].interval); card.remove(); delete activeTimers[id]; if(onEnd) onEnd(); }
+                if (activeTimers[id].remaining <= 0 || !gameActive) { clearInterval(activeTimers[id].interval); card.remove(); delete activeTimers[id]; if(onE) onE(); }
                 else { let t = document.getElementById('timer-' + id); if(t) t.innerText = activeTimers[id].remaining + "s"; }
             }, 1000)};
         }
 
-        function spawnApple(forceGreen, count) {
+        function spawnApple(fG, c) {
             if(!gameActive) return;
-            for(let i=0; i<count; i++) {
-                let isOp = forceGreen || Math.random() < currentLuck;
-                apples.push({ x: Math.random() * (canvas.width - 30), y: Math.random() * (canvas.height - 30), size: isOp ? 15 : 30, emoji: isOp ? "🍏" : "🍎", isOp: isOp });
+            for(let i=0; i<c; i++) {
+                let isOp = fG || Math.random() < currentLuck;
+                apples.push({ x: Math.random() * (canvas.width - 30), y: Math.random() * (canvas.height - 30), size: isOp ? 18 : 34, emoji: isOp ? "🍏" : "🍎", isOp: isOp });
             }
         }
 
@@ -194,7 +215,8 @@
             let dx = player.x - ball.x; let dy = player.y - ball.y;
             let dist = Math.sqrt(dx*dx+dy*dy);
             if(dist > 35) { ball.x += (dx/dist)*ball.speed; ball.y += (dy/dist)*ball.speed; }
-            ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.fillText("🕹", player.x, player.y); ctx.fillText(ball.emoji, ball.x, ball.y);
+            ctx.font = "40px Nunito"; ctx.textAlign = "center"; 
+            ctx.fillText("🕹", player.x, player.y); ctx.fillText(ball.emoji, ball.x, ball.y);
             apples = apples.filter(a => {
                 let adx = ball.x - a.x; let ady = ball.y - a.y;
                 if(Math.sqrt(adx*adx+ady*ady) < a.size) {
@@ -202,7 +224,7 @@
                     if(a.isOp) { ball.speed = 12; setTimeout(() => ball.speed = 4, 3000); }
                     return false;
                 }
-                ctx.font = a.size + "px Arial"; ctx.fillText(a.emoji, a.x, a.y); return true;
+                ctx.font = a.size + "px Nunito"; ctx.fillText(a.emoji, a.x, a.y); return true;
             });
             requestAnimationFrame(update);
         }
