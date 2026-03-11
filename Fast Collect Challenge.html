@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emoji Ball Game - Pro HUD</title>
+    <title>Fast Collect Challenge</title>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #222; font-family: Arial, sans-serif; }
@@ -20,7 +20,11 @@
         #hud-events { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: row-reverse; gap: 15px; z-index: 1000; }
         .event-card { display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); min-width: 80px; }
         .event-card img { width: 60px; height: 60px; object-fit: cover; margin-bottom: 5px; }
-        .img-apple { border-radius: 50% !important; } /* Uniquement la pomme en rond */
+        
+        /* Luck = Carré | Pomme = Ronde */
+        .img-luck { border-radius: 0; }
+        .img-apple { border-radius: 50%; }
+        
         .event-timer { color: white; font-weight: bold; font-size: 18px; }
 
         #discord-btn { position: absolute; bottom: 20px; left: 20px; z-index: 20; background: #5865F2; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 14px; }
@@ -40,6 +44,7 @@
         const channel = ably.channels.get('admin-commands');
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
+        
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize); resize();
 
@@ -51,9 +56,7 @@
         let timeLeft = 60;
         let gameActive = true;
         let currentLuck = 0.05;
-
-        // Variables pour gérer le cumul
-        let activeTimers = {}; 
+        let activeTimers = {};
 
         const LUCK_IMAGES = {
             2: "https://static.wikia.nocookie.net/stealabr/images/e/ea/2xLuck.webp/revision/latest?cb=20250823205013",
@@ -75,7 +78,7 @@
             let card = document.createElement('div');
             card.className = 'event-card';
             card.id = 'event-' + id;
-            card.innerHTML = `<img src="${imgUrl}" class="${isApple ? 'img-apple' : ''}"><div class="event-timer" id="timer-${id}">${duration}s</div>`;
+            card.innerHTML = `<img src="${imgUrl}" class="${isApple ? 'img-apple' : 'img-luck'}"><div class="event-timer" id="timer-${id}">${duration}s</div>`;
             container.appendChild(card);
 
             activeTimers[id] = {
@@ -88,7 +91,8 @@
                         delete activeTimers[id];
                         if(onEnd) onEnd();
                     } else {
-                        document.getElementById('timer-' + id).innerText = activeTimers[id].remaining + "s";
+                        let t = document.getElementById('timer-' + id);
+                        if(t) t.innerText = activeTimers[id].remaining + "s";
                     }
                 }, 1000)
             };
@@ -108,7 +112,7 @@
                 currentLuck = 0.05;
                 if(activeTimers['luck']) {
                     clearInterval(activeTimers['luck'].interval);
-                    document.getElementById('event-luck').remove();
+                    let card = document.getElementById('event-luck'); if(card) card.remove();
                     delete activeTimers['luck'];
                 }
             }
@@ -116,10 +120,9 @@
             if (msg.name === 'reset') location.reload();
 
             if (msg.name === 'greentime') {
-                let oldLuck = currentLuck;
-                currentLuck = 1.0;
-                showAdminMsg(`FelixRouge activated Green time!`, 'bottom', 'lime');
-                startHudTimer('greentime', GREEN_IMG, data.time, true, () => { currentLuck = oldLuck; });
+                let oldL = currentLuck; currentLuck = 1.0;
+                showAdminMsg(`FelixRouge activated Green time!`, 'bottom', 'cyan');
+                startHudTimer('greentime', GREEN_IMG, data.time, true, () => { currentLuck = oldL; });
             }
 
             if (msg.name === 'addtime') {
@@ -127,7 +130,10 @@
                 document.getElementById("timer-display").textContent = "Timer: " + timeLeft;
             }
 
-            if (msg.name === 'spawn') spawnApple(true, data.count);
+            if (msg.name === 'spawn') {
+                spawnApple(true, data.count);
+                showAdminMsg(`FelixRouge spawned ${data.count} Green Apples!`, 'bottom', '#DAA520');
+            }
 
             if (msg.name === 'ballSpeed') {
                 ball.baseSpeed = 4 * data.mult; ball.speed = ball.baseSpeed;
@@ -140,12 +146,12 @@
             }
         });
 
-        function showAdminMsg(htmlContent, pos, color, isHTML = false) {
+        function showAdminMsg(txt, pos, color) {
             const container = document.getElementById(pos === 'top' ? 'msg-container-top' : 'msg-container-bottom');
             const div = document.createElement('div');
             div.className = 'admin-msg';
             div.style.color = color;
-            if(isHTML) div.innerHTML = htmlContent; else div.innerText = htmlContent;
+            div.innerText = txt;
             container.appendChild(div);
             setTimeout(() => div.remove(), 5000);
         }
