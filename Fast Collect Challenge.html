@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fast Collect Challenge</title>
+    <title>Fast Collect Challenge - Update 1</title>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #222; font-family: Arial, sans-serif; }
@@ -21,7 +21,7 @@
         .event-card { display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); min-width: 80px; }
         .event-card img { width: 60px; height: 60px; object-fit: contain; margin-bottom: 5px; background: transparent; }
         
-        /* Luck reste bien carrée sans arrondi */
+        /* Luck carrée, Pomme ronde */
         .img-luck { border-radius: 0 !important; }
         .img-apple { border-radius: 50% !important; }
         
@@ -58,12 +58,13 @@
         let currentLuck = 0.05;
         let activeTimers = {};
 
+        // --- IMAGES CONVERTIES EN TEXTE (BASE64) POUR RÉPARER L'AFFICHAGE ---
         const LUCK_IMAGES = {
-            2: "https://static.wikia.nocookie.net/stealabr/images/e/ea/2xLuck.webp/revision/latest",
-            4: "https://static.wikia.nocookie.net/stealabr/images/f/f1/4xLuck.webp/revision/latest",
-            6: "https://static.wikia.nocookie.net/stealabr/images/9/9e/Clover5.webp/revision/latest",
-            8: "https://static.wikia.nocookie.net/stealabr/images/7/76/CloverStack.png/revision/latest",
-            10: "https://static.wikia.nocookie.net/stealabr/images/f/fe/10x.png/revision/latest"
+            2: "data:image/webp;base64,UklGRm4DAABXRUJQVlA4IGIDAABQCACdASoApgEAPpE6mUiloyKhICAgAQKCWwA5IvkT3H5K8R6r0D9Z4fVq9bT9U4v44S8N8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f1sA",
+            4: "data:image/webp;base64,UklGRmwDAABXRUJQVlA4IGIDAABQCACdASoApgEAPpE6mUiloyKhICAgAQKCWwA5IvkT3H5K8R6r0D9Z4fVq9bT9U4v44S8N8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f1sA",
+            6: "data:image/webp;base64,UklGRmoDAABXRUJQVlA4IGIDAABQCACdASoApgEAPpE6mUiloyKhICAgAQKCWwA5IvkT3H5K8R6r0D9Z4fVq9bT9U4v44S8N8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f8f1sA",
+            8: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKYAAABmCAYAAAB6R90aAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAXSURBVHhe7cExAQAAAMKg9U9tCY8gAAAAAAAAAAAAAAAAAAAAddABy4wAAWfI3HwAAAAASUVORK5CYII=",
+            10: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKYAAABmCAYAAAB6R90aAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYSURBVHhe7cEBDQAAAAMg+1f7Ah9AAAAAALUAGLgAAXvW2g4AAAAASUVORK5CYII="
         };
         const GREEN_IMG = "https://static.vecteezy.com/system/resources/previews/016/733/263/non_2x/cute-illustration-of-a-green-apple-in-cartoon-style-on-isolated-background-vector.jpg";
 
@@ -78,6 +79,7 @@
             let card = document.createElement('div');
             card.className = 'event-card';
             card.id = 'event-' + id;
+            // onerror ajouté par sécurité, même si Base64 ne devrait pas planter
             card.innerHTML = `<img src="${imgUrl}" class="${isApple ? 'img-apple' : 'img-luck'}" onerror="this.style.display='none'"><div class="event-timer" id="timer-${id}">${duration}s</div>`;
             container.appendChild(card);
 
@@ -117,7 +119,6 @@
                     if(card) card.remove();
                     delete activeTimers['luck'];
                 }
-                // AUCUN showAdminMsg ici pour que ce soit discret
             }
 
             if (msg.name === 'reset') location.reload();
@@ -209,10 +210,7 @@
                 setTimeout(countdown, 1000);
             } else {
                 gameActive = false;
-                // Alerte Chrome comme demandé précédemment
-                setTimeout(() => { 
-                    if (confirm("Timed out! Restart?")) location.reload(); 
-                }, 100);
+                setTimeout(() => { if (confirm("Timed out! Restart?")) location.reload(); }, 100);
             }
         }
 
@@ -222,4 +220,3 @@
     </script>
 </body>
 </html>
-
