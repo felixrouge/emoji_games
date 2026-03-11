@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fast Collect Challenge</title>
+    <title>Fast Collect Challenge - Upd1</title>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #222; font-family: Arial, sans-serif; }
@@ -16,11 +16,9 @@
         #msg-container-bottom { position: fixed; bottom: 150px; left: 0; width: 100%; display: flex; flex-direction: column-reverse; align-items: center; z-index: 10000; pointer-events: none; }
         .admin-msg { font-size: 44px; font-weight: bold; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin: 5px 0; width: 100%; }
 
-        /* HUD ÉVÉNEMENTS */
         #hud-events { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: row-reverse; gap: 15px; z-index: 1000; }
         .event-card { display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; border: 2px solid #555; min-width: 80px; }
         
-        /* Conteneur d'image avec Emoji de secours */
         .img-container { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; position: relative; font-size: 40px; }
         .img-container img { width: 100%; height: 100%; object-fit: contain; position: absolute; z-index: 2; }
         
@@ -60,7 +58,6 @@
         let currentLuck = 0.05;
         let activeTimers = {};
 
-        // On remet les liens, mais avec un système de secours
         const LUCK_IMAGES = {
             2: "https://static.wikia.nocookie.net/stealabr/images/e/ea/2xLuck.webp",
             4: "https://static.wikia.nocookie.net/stealabr/images/f/f1/4xLuck.webp",
@@ -72,17 +69,11 @@
 
         function startHudTimer(id, imgUrl, duration, isApple = false, onEnd) {
             let container = document.getElementById('hud-events');
-            
-            if (activeTimers[id]) {
-                activeTimers[id].remaining += duration;
-                return;
-            }
+            if (activeTimers[id]) { activeTimers[id].remaining += duration; return; }
 
             let card = document.createElement('div');
             card.className = 'event-card';
             card.id = 'event-' + id;
-            
-            // Emoji de secours si l'image bug : 🍀 pour luck, 🍏 pour apple
             let fallback = isApple ? '🍏' : '🍀';
             
             card.innerHTML = `
@@ -113,12 +104,13 @@
 
         channel.subscribe((msg) => {
             const data = msg.data;
+            
             if (msg.name === 'announce') showAdminMsg(data.text, 'top', 'white');
             
             if (msg.name === 'luck') {
                 currentLuck = data.val;
-                // MESSAGE CORRIGÉ ICI
-                showAdminMsg(`FelixRouge activated ${data.mult}x luck!`, 'bottom', 'lime');
+                // --- Message Luck Corrigé ---
+                showAdminMsg(`FelixRouge activated ${data.mult}x luck!`, 'bottom', getLuckColor(data.mult));
                 startHudTimer('luck', LUCK_IMAGES[data.mult], data.time, false, () => { currentLuck = 0.05; });
             }
 
@@ -143,6 +135,8 @@
             if (msg.name === 'addtime') {
                 timeLeft += data.seconds;
                 document.getElementById("timer-display").textContent = "Timer: " + timeLeft;
+                // --- Nouveau Message Timer ---
+                showAdminMsg(`FelixRouge added ${data.seconds} to your timer!`, 'bottom', getTimeColor(data.seconds));
             }
 
             if (msg.name === 'spawn') {
@@ -160,6 +154,22 @@
                 showAdminMsg(`FelixRouge put apple boost at ${data.mult}`, 'bottom', 'white');
             }
         });
+
+        // Fonctions pour les couleurs dynamiques
+        function getLuckColor(m) {
+            if(m <= 2) return 'lime';
+            if(m <= 4) return '#DAA520';
+            if(m <= 6) return 'purple';
+            if(m <= 8) return 'orange';
+            return 'red';
+        }
+
+        function getTimeColor(s) {
+            if(s <= 10) return 'lime';
+            if(s <= 15) return '#DAA520';
+            if(s <= 20) return 'purple';
+            return 'orange';
+        }
 
         function showAdminMsg(txt, pos, color) {
             const container = document.getElementById(pos === 'top' ? 'msg-container-top' : 'msg-container-bottom');
@@ -221,9 +231,7 @@
                 setTimeout(countdown, 1000);
             } else {
                 gameActive = false;
-                setTimeout(() => { 
-                    if (confirm("Timed out! Restart?")) location.reload(); 
-                }, 100);
+                setTimeout(() => { if (confirm("Timed out! Restart?")) location.reload(); }, 100);
             }
         }
 
