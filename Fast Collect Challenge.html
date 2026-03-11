@@ -3,79 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emoji Ball Game</title>
+    <title>Emoji Ball Game - Pro HUD</title>
+    <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        canvas { background-color: #222; display: block; border: 2px solid white; }
-        #score, #timer {
-            position: absolute;
-            color: white;
-            font-size: 24px;
-            font-family: Arial, sans-serif;
-        }
+        body { margin: 0; overflow: hidden; background-color: #222; font-family: Arial, sans-serif; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        #score, #timer-display { position: absolute; color: white; font-size: 24px; z-index: 10; text-shadow: 2px 2px 4px black; }
         #score { left: 20px; top: 20px; }
-        #timer { right: 20px; top: 20px; }
+        #timer-display { right: 20px; top: 20px; }
+        
+        #msg-container-top { position: fixed; top: 60px; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; z-index: 10000; pointer-events: none; }
+        #msg-container-bottom { position: fixed; bottom: 150px; left: 0; width: 100%; display: flex; flex-direction: column-reverse; align-items: center; z-index: 10000; pointer-events: none; }
+        .admin-msg { font-size: 44px; font-weight: bold; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin: 5px 0; width: 100%; }
+
+        /* HUD ÉVÉNEMENTS */
+        #hud-events { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: row-reverse; gap: 15px; z-index: 1000; }
+        .event-card { display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); min-width: 80px; }
+        .event-card img { width: 60px; height: 60px; object-fit: cover; margin-bottom: 5px; }
+        .img-apple { border-radius: 50% !important; } /* Uniquement la pomme en rond */
+        .event-timer { color: white; font-weight: bold; font-size: 18px; }
+
+        #discord-btn { position: absolute; bottom: 20px; left: 20px; z-index: 20; background: #5865F2; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
     <div id="score">Score: 0</div>
-    <div id="timer">Temps: 60</div>
+    <div id="timer-display">Timer: 60</div>
+    <div id="msg-container-top"></div>
+    <div id="msg-container-bottom"></div>
+    <div id="hud-events"></div>
+    <a href="https://discord.gg/CP9hFvjDDC" target="_blank" id="discord-btn">Join Discord</a>
     <canvas id="gameCanvas"></canvas>
+
     <script>
+        const ably = new Ably.Realtime('bZFMkw.u1oLTg:xhXyW5SeGGYAmDyoGjYDfkbodtDNkZcEMXw11__DDxM');
+        const channel = ably.channels.get('admin-commands');
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
-        canvas.width = window.innerWidth * 0.8;
-        canvas.height = window.innerHeight * 0.8;
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
 
         let player = { x: canvas.width / 2, y: canvas.height / 2, size: 20, emoji: "🕹" };
         let ball = { x: 100, y: 100, speed: 4, baseSpeed: 4, emoji: "🏐" };
+        let greenAppleBoost = 3; 
         let apples = [];
-        let appleSize = 30;
         let score = 0;
         let timeLeft = 60;
-        let speedBoostActive = false;
+        let gameActive = true;
+        let currentLuck = 0.05;
 
-        function spawnApple() {
-            let isOp = Math.random() < 0.05; // 1 chance sur 20
-            apples.push({
-                x: Math.random() * (canvas.width - appleSize),
-                y: Math.random() * (canvas.height - appleSize),
-                size: isOp ? appleSize / 2 : appleSize,
-                emoji: isOp ? "🍏" : "🍎",
-                isOp: isOp
-            });
+        // Variables pour gérer le cumul
+        let activeTimers = {}; 
+
+        const LUCK_IMAGES = {
+            2: "https://static.wikia.nocookie.net/stealabr/images/e/ea/2xLuck.webp/revision/latest?cb=20250823205013",
+            4: "https://static.wikia.nocookie.net/stealabr/images/f/f1/4xLuck.webp/revision/latest?cb=20250823205711",
+            6: "https://static.wikia.nocookie.net/stealabr/images/9/9e/Clover5.webp/revision/latest?cb=20250824202439",
+            8: "https://static.wikia.nocookie.net/stealabr/images/7/76/CloverStack.png/revision/latest?cb=20250824201931",
+            10: "https://static.wikia.nocookie.net/stealabr/images/f/fe/10x.png/revision/latest?cb=20251026151836"
+        };
+        const GREEN_IMG = "https://static.vecteezy.com/system/resources/previews/016/733/263/non_2x/cute-illustration-of-a-green-apple-in-cartoon-style-on-isolated-background-vector.jpg";
+
+        function startHudTimer(id, imgUrl, duration, isApple = false, onEnd) {
+            let container = document.getElementById('hud-events');
+            
+            if (activeTimers[id]) {
+                activeTimers[id].remaining += duration;
+                return;
+            }
+
+            let card = document.createElement('div');
+            card.className = 'event-card';
+            card.id = 'event-' + id;
+            card.innerHTML = `<img src="${imgUrl}" class="${isApple ? 'img-apple' : ''}"><div class="event-timer" id="timer-${id}">${duration}s</div>`;
+            container.appendChild(card);
+
+            activeTimers[id] = {
+                remaining: duration,
+                interval: setInterval(() => {
+                    activeTimers[id].remaining--;
+                    if (activeTimers[id].remaining <= 0 || !gameActive) {
+                        clearInterval(activeTimers[id].interval);
+                        card.remove();
+                        delete activeTimers[id];
+                        if(onEnd) onEnd();
+                    } else {
+                        document.getElementById('timer-' + id).innerText = activeTimers[id].remaining + "s";
+                    }
+                }, 1000)
+            };
+        }
+
+        channel.subscribe((msg) => {
+            const data = msg.data;
+            if (msg.name === 'announce') showAdminMsg(data.text, 'top', 'white');
+            
+            if (msg.name === 'luck') {
+                currentLuck = data.val;
+                showAdminMsg(`FelixRouge activated ${data.mult}x!`, 'bottom', 'lime');
+                startHudTimer('luck', LUCK_IMAGES[data.mult], data.time, false, () => { currentLuck = 0.05; });
+            }
+
+            if (msg.name === 'clearLuck') {
+                currentLuck = 0.05;
+                if(activeTimers['luck']) {
+                    clearInterval(activeTimers['luck'].interval);
+                    document.getElementById('event-luck').remove();
+                    delete activeTimers['luck'];
+                }
+            }
+
+            if (msg.name === 'reset') location.reload();
+
+            if (msg.name === 'greentime') {
+                let oldLuck = currentLuck;
+                currentLuck = 1.0;
+                showAdminMsg(`FelixRouge activated Green time!`, 'bottom', 'lime');
+                startHudTimer('greentime', GREEN_IMG, data.time, true, () => { currentLuck = oldLuck; });
+            }
+
+            if (msg.name === 'addtime') {
+                timeLeft += data.seconds;
+                document.getElementById("timer-display").textContent = "Timer: " + timeLeft;
+            }
+
+            if (msg.name === 'spawn') spawnApple(true, data.count);
+
+            if (msg.name === 'ballSpeed') {
+                ball.baseSpeed = 4 * data.mult; ball.speed = ball.baseSpeed;
+                showAdminMsg(`FelixRouge put ball speed at ${data.mult}`, 'bottom', 'white');
+            }
+
+            if (msg.name === 'appleSpeed') {
+                greenAppleBoost = data.mult;
+                showAdminMsg(`FelixRouge put apple boost at ${data.mult}`, 'bottom', 'white');
+            }
+        });
+
+        function showAdminMsg(htmlContent, pos, color, isHTML = false) {
+            const container = document.getElementById(pos === 'top' ? 'msg-container-top' : 'msg-container-bottom');
+            const div = document.createElement('div');
+            div.className = 'admin-msg';
+            div.style.color = color;
+            if(isHTML) div.innerHTML = htmlContent; else div.innerText = htmlContent;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 5000);
+        }
+
+        function spawnApple(forceGreen = false, count = 1) {
+            if(!gameActive) return;
+            for(let i=0; i<count; i++) {
+                let isOp = forceGreen || Math.random() < currentLuck;
+                apples.push({ x: Math.random() * (canvas.width - 30), y: Math.random() * (canvas.height - 30), size: isOp ? 15 : 30, emoji: isOp ? "🍏" : "🍎", isOp: isOp });
+            }
         }
 
         function moveBall() {
-            let dx = player.x - ball.x;
-            let dy = player.y - ball.y;
+            if(!gameActive) return;
+            let dx = player.x - ball.x; let dy = player.y - ball.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance > player.size + 15) {
-                ball.x += (dx / distance) * ball.speed;
-                ball.y += (dy / distance) * ball.speed;
-            }
-        }
-
-        function activateSpeedBoost() {
-            if (!speedBoostActive) {
-                speedBoostActive = true;
-                ball.speed *= 7;
-                setTimeout(() => {
-                    ball.speed = ball.baseSpeed;
-                    speedBoostActive = false;
-                }, 3000);
-            }
+            if (distance > 35) { ball.x += (dx / distance) * ball.speed; ball.y += (dy / distance) * ball.speed; }
         }
 
         function checkCollision() {
+            if(!gameActive) return;
             apples = apples.filter(apple => {
-                let dx = ball.x - apple.x;
-                let dy = ball.y - apple.y;
+                let dx = ball.x - apple.x; let dy = ball.y - apple.y;
                 let distance = Math.sqrt(dx * dx + dy * dy);
                 if (distance < apple.size) {
                     score += apple.isOp ? 3 : 1;
                     document.getElementById("score").textContent = "Score: " + score;
-                    if (apple.isOp) activateSpeedBoost();
+                    if (apple.isOp) { 
+                        ball.speed = ball.baseSpeed * greenAppleBoost;
+                        setTimeout(() => { if(gameActive) ball.speed = ball.baseSpeed; }, 3000);
+                    }
                     return false;
                 }
                 return true;
@@ -84,54 +185,28 @@
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Dessiner le joueur (🕹)
-            ctx.font = player.size * 2 + "px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
+            ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
             ctx.fillText(player.emoji, player.x, player.y);
-            
-            // Dessiner la balle (🏐)
             ctx.fillText(ball.emoji, ball.x, ball.y);
-            
-            // Dessiner les pommes
-            apples.forEach(apple => {
-                ctx.font = apple.size + "px Arial";
-                ctx.fillText(apple.emoji, apple.x, apple.y);
-            });
+            apples.forEach(apple => { ctx.font = apple.size + "px Arial"; ctx.fillText(apple.emoji, apple.x, apple.y); });
         }
 
-        function update() {
-            moveBall();
-            checkCollision();
-            draw();
-            requestAnimationFrame(update);
-        }
+        function update() { moveBall(); checkCollision(); draw(); requestAnimationFrame(update); }
 
         function countdown() {
             if (timeLeft > 0) {
                 timeLeft--;
-                document.getElementById("timer").textContent = "Temps: " + timeLeft;
+                document.getElementById("timer-display").textContent = "Timer: " + timeLeft;
                 setTimeout(countdown, 1000);
             } else {
-                setTimeout(() => {
-                    if (confirm("Temps écoulé ! Score final: " + score + "\nRejouer ?")) {
-                        location.reload();
-                    }
-                }, 100);
+                gameActive = false;
+                setTimeout(() => { if (confirm("Timed out! Restart?")) location.reload(); }, 100);
             }
         }
 
-        window.addEventListener("mousemove", (e) => {
-            player.x = e.clientX - canvas.getBoundingClientRect().left;
-            player.y = e.clientY - canvas.getBoundingClientRect().top;
-        });
-
-        setInterval(spawnApple, 1000);
-        countdown();
-        update();
+        window.addEventListener("mousemove", (e) => { player.x = e.clientX; player.y = e.clientY; });
+        setInterval(() => { if(gameActive) spawnApple(false, 1); }, 1000);
+        countdown(); update();
     </script>
 </body>
 </html>
-
-
