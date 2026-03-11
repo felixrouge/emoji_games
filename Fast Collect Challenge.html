@@ -12,51 +12,43 @@
         #score, #timer-display { position: absolute; color: white; font-size: 28px; font-weight: 900; z-index: 10; text-shadow: 2px 2px 4px black; top: 20px; }
         #score { left: 20px; } #timer-display { right: 20px; }
 
-        /* CONTENEUR DES MESSAGES EN HAUT */
+        /* --- HAUT : SONDAGE ET ANNONCES --- */
         #top-ui-wrapper {
             position: fixed; top: 20px; left: 0; width: 100%;
             display: flex; flex-direction: column; align-items: center;
             z-index: 10000; pointer-events: none;
         }
-
-        /* SONDAGE STYLE "STEAL A BRAINROT" */
         #poll-box { 
-            background: #ADD8E6; padding: 20px; border-radius: 10px; 
-            border: 4px solid white; color: black; display: none; 
-            width: 550px; text-align: center; pointer-events: auto;
+            background: #ADD8E6; padding: 20px; border-radius: 10px; border: 4px solid white; 
+            color: black; display: none; width: 550px; text-align: center; pointer-events: auto;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5); margin-bottom: 20px;
         }
         #poll-q { font-size: 28px; font-weight: 900; margin-bottom: 15px; text-transform: uppercase; }
-        
         .poll-ui-row { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; }
-        .vote-count { font-size: 30px; font-weight: 900; min-width: 40px; }
-        
-        .dual-bar { display: flex; width: 400px; height: 35px; border: 4px solid black; overflow: hidden; border-radius: 8px; background: #444; }
-        #bar-1 { width: 50%; background: #FF4444; border-right: 2px solid black; transition: width 0.4s ease-out; }
-        #bar-2 { width: 50%; background: #4444FF; transition: width 0.4s ease-out; }
-
+        .vote-count { font-size: 30px; font-weight: 900; min-width: 50px; }
+        .dual-bar { display: flex; width: 400px; height: 35px; border: 4px solid black; overflow: hidden; border-radius: 8px; background: #555; }
+        #bar-1 { width: 50%; background: #FF4444; border-right: 2px solid black; transition: width 0.3s; }
+        #bar-2 { width: 50%; background: #4444FF; transition: width 0.3s; }
         .poll-buttons { display: flex; justify-content: center; gap: 30px; }
-        .poll-btn { 
-            padding: 10px 30px; border-radius: 8px; border: 4px solid black; 
-            font-weight: 900; cursor: pointer; color: white; font-family: 'Nunito'; font-size: 18px;
-            transition: transform 0.1s;
-        }
-        .poll-btn:active { transform: scale(0.95); }
-        #poll-o1 { background: #FF4444; }
-        #poll-o2 { background: #4444FF; }
+        .poll-btn { padding: 10px 30px; border-radius: 8px; border: 4px solid black; font-weight: 900; cursor: pointer; color: white; font-size: 18px; }
+        #poll-o1 { background: #FF4444; } #poll-o2 { background: #4444FF; }
 
-        /* MESSAGES D'ANNONCE (SOUS LE SONDAGE) */
-        #msg-container-top { width: 100%; display: flex; flex-direction: column; align-items: center; }
-        .admin-msg { font-size: 50px; font-weight: 900; color: white; text-shadow: 3px 3px 10px black; margin: 10px; }
+        /* ANNONCES (SOUS LE SONDAGE) */
+        #msg-announce { font-size: 50px; font-weight: 900; color: white; text-shadow: 3px 3px 10px black; }
 
-        /* HUD BAS DROITE */
+        /* --- BAS : MESSAGES FelixRouge --- */
+        #msg-container-bottom { position: fixed; bottom: 150px; left: 0; width: 100%; display: flex; flex-direction: column-reverse; align-items: center; z-index: 10000; pointer-events: none; }
+        .admin-msg { font-size: 45px; font-weight: 900; text-align: center; text-shadow: 2px 2px 8px black; margin: 5px; }
+
+        /* HUD ET DISCORD */
         #hud-events { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: row-reverse; gap: 15px; z-index: 1000; }
         .event-card { display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.85); padding: 10px; border-radius: 12px; border: 2px solid #555; min-width: 85px; }
-        .img-container { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+        .img-container { width: 60px; height: 60px; position: relative; display: flex; align-items: center; justify-content: center; }
+        .img-container img { width: 100%; height: 100%; object-fit: contain; position: absolute; }
         .event-timer { color: white; font-weight: 900; font-size: 20px; margin-top: 5px; }
+        #discord-btn { position: fixed; bottom: 20px; left: 20px; background: #5865F2; color: white; padding: 12px 20px; border-radius: 10px; text-decoration: none; font-weight: 900; z-index: 100; border: 2px solid white; }
 
         .rainbow-text { background: linear-gradient(to right, #ff9999, #ffff99, #99ff99, #99ccff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .txt-violet { color: #A020F0; }
     </style>
 </head>
 <body>
@@ -65,7 +57,7 @@
     
     <div id="top-ui-wrapper">
         <div id="poll-box">
-            <div id="poll-q">Question ?</div>
+            <div id="poll-q">Caylus or Sammy</div>
             <div class="poll-ui-row">
                 <span class="vote-count" id="count-1">0</span>
                 <div class="dual-bar"><div id="bar-1"></div><div id="bar-2"></div></div>
@@ -76,10 +68,13 @@
                 <button class="poll-btn" id="poll-o2" onclick="vote(2)">Option B</button>
             </div>
         </div>
-        <div id="msg-container-top"></div>
+        <div id="msg-announce"></div>
     </div>
 
+    <div id="msg-container-bottom"></div>
     <div id="hud-events"></div>
+    <a href="https://discord.gg/CP9hFvjDDC" target="_blank" id="discord-btn">Discord</a>
+
     <canvas id="gameCanvas"></canvas>
 
     <script>
@@ -99,8 +94,14 @@
         channel.subscribe((msg) => {
             const d = msg.data;
 
-            if (msg.name === 'announce') showMsg(d.text, {color: 'white'});
+            // 1. Annonce Globale (Haut)
+            if (msg.name === 'announce') {
+                const el = document.getElementById('msg-announce');
+                el.innerText = d.text;
+                setTimeout(() => el.innerText = "", 5000);
+            }
 
+            // 2. Sondage (Haut)
             if (msg.name === 'poll') {
                 votes = { 1: 0, 2: 0, total: 0 };
                 document.getElementById('poll-box').style.display = 'block';
@@ -112,32 +113,28 @@
                 updateBars();
                 setTimeout(() => document.getElementById('poll-box').style.display = 'none', 20000);
             }
-
             if (msg.name === 'vote_sync') { votes[d.opt]++; votes.total++; updateBars(); }
 
+            // 3. FelixRouge Messages (Bas)
             if (msg.name === 'luck') {
                 currentLuck = d.val;
-                showMsg(`FelixRouge activated ${d.mult}x luck!`, getLuckStyle(d.mult));
-                startHudTimer('luck', '🍀', d.time, () => currentLuck = 0.05);
+                showBottomMsg(`FelixRouge activated ${d.mult}x luck!`, getLuckStyle(d.mult));
+                startHudTimer('luck', getLuckImg(d.mult), d.time, () => currentLuck = 0.05);
             }
-
             if (msg.name === 'greentime') {
                 let old = currentLuck; currentLuck = 1.0;
-                showMsg(`FelixRouge activated <span class="txt-violet">Green time</span>!`, getLuckStyle(8));
-                startHudTimer('gt', '🍏', d.time, () => currentLuck = old);
+                showBottomMsg(`FelixRouge activated <span style="color:#A020F0">Green time</span>!`, {isRainbow:true});
+                startHudTimer('gt', "https://static.vecteezy.com/system/resources/previews/016/733/263/non_2x/cute-illustration-of-a-green-apple-in-cartoon-style-on-isolated-background-vector.jpg", d.time, () => currentLuck = old);
             }
-
             if (msg.name === 'ballSpeed') {
                 ball.baseSpeed = 4 * d.mult; ball.speed = ball.baseSpeed;
-                showMsg(`FelixRouge set ball speed to x${d.mult}`, {color: d.mult>=2?'black':'white'});
+                showBottomMsg(`FelixRouge set ball speed to x${d.mult}`, {color: d.mult>=2?'black':'white'});
             }
-
             if (msg.name === 'appleSpeed') {
                 greenAppleBoost = d.mult;
-                showMsg(`FelixRouge set apple boost to x${d.mult}`, d.mult >= 7 ? {isRainbow:true} : {color:'#32CD32'});
+                showBottomMsg(`FelixRouge set apple boost to x${d.mult}`, {color: '#32CD32'});
             }
-
-            if (msg.name === 'addtime') { timeLeft += d.seconds; showMsg(`FelixRouge added ${d.seconds}s to your <span class="txt-violet">timer</span>!`, {color: 'white'}); }
+            if (msg.name === 'addtime') { timeLeft += d.seconds; showBottomMsg(`FelixRouge added ${d.seconds}s to your timer!`, {color: 'white'}); }
             if (msg.name === 'spawn') spawnApple(true, d.count);
             if (msg.name === 'reset') location.reload();
         });
@@ -149,34 +146,40 @@
         }
 
         function updateBars() {
-            let p1 = votes.total === 0 ? 50 : (votes[1] / votes.total) * 100;
-            let p2 = votes.total === 0 ? 50 : (votes[2] / votes.total) * 100;
+            let p1, p2;
+            if (votes.total === 0) { p1 = 50; p2 = 50; } 
+            else { p1 = (votes[1] / votes.total) * 100; p2 = (votes[2] / votes.total) * 100; }
             document.getElementById('bar-1').style.width = p1 + "%";
             document.getElementById('bar-2').style.width = p2 + "%";
             document.getElementById('count-1').innerText = votes[1];
             document.getElementById('count-2').innerText = votes[2];
         }
 
-        function showMsg(html, style) {
+        function showBottomMsg(html, style) {
             const div = document.createElement('div');
             div.className = 'admin-msg';
             if(style.isRainbow) div.innerHTML = `<span class="rainbow-text">${html}</span>`;
             else { div.innerHTML = html; div.style.color = style.color; if(style.color==='black') div.style.textShadow="0 0 10px white"; }
-            document.getElementById('msg-container-top').appendChild(div);
+            document.getElementById('msg-container-bottom').appendChild(div);
             setTimeout(() => div.remove(), 5000);
         }
 
-        function startHudTimer(id, emoji, dur, onEnd) {
+        function startHudTimer(id, imgUrl, dur, onEnd) {
             if (activeTimers[id]) { activeTimers[id].rem += dur; return; }
             const card = document.createElement('div');
             card.className = 'event-card'; card.id = 'ev-'+id;
-            card.innerHTML = `<div class="img-container">${emoji}</div><div class="event-timer" id="t-${id}">${dur}s</div>`;
+            card.innerHTML = `<div class="img-container"><img src="${imgUrl}"></div><div class="event-timer" id="t-${id}">${dur}s</div>`;
             document.getElementById('hud-events').appendChild(card);
             activeTimers[id] = { rem: dur, interval: setInterval(() => {
                 activeTimers[id].rem--;
                 if(activeTimers[id].rem <= 0) { clearInterval(activeTimers[id].interval); card.remove(); delete activeTimers[id]; onEnd(); }
                 else document.getElementById('t-'+id).innerText = activeTimers[id].rem + "s";
             }, 1000)};
+        }
+
+        function getLuckImg(m) {
+            const imgs = { 2: "https://static.wikia.nocookie.net/stealabr/images/e/ea/2xLuck.webp", 4: "https://static.wikia.nocookie.net/stealabr/images/f/f1/4xLuck.webp", 6: "https://static.wikia.nocookie.net/stealabr/images/9/9e/Clover5.webp", 8: "https://static.wikia.nocookie.net/stealabr/images/7/76/CloverStack.png", 10: "https://static.wikia.nocookie.net/stealabr/images/f/fe/10x.png" };
+            return imgs[m] || "";
         }
 
         function getLuckStyle(m) {
@@ -212,7 +215,7 @@
 
         function countdown() {
             if(timeLeft > 0) { timeLeft--; document.getElementById("timer-display").innerText = "Timer: " + timeLeft; setTimeout(countdown, 1000); }
-            else { gameActive = false; alert("Temps écoulé ! Score final: " + score); location.reload(); }
+            else { gameActive = false; alert("Score final: " + score); location.reload(); }
         }
 
         window.addEventListener("mousemove", (e) => { player.x = e.clientX; player.y = e.clientY; });
